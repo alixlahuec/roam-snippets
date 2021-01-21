@@ -1,0 +1,2 @@
+##roam-get-linked-refs-data
+Adds a `data-page-title` attribute to the top element for each page listed in the Linked References section. The value is equal to the title of that page in the database, and is accessible directly through JavaScript and CSS.

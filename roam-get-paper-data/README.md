@@ -1,0 +1,2 @@
+##roam-get-paper-data
+Adds a `data-paper-title` attribute to each page reference that links to a page whose title starts with `@`. The value is equal to the contents of the block with attribute `Title::` located on that page, and is accessible directly in JavaScript and CSS.

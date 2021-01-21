@@ -1,2 +1,6 @@
 # roam-snippets
-A collection of code snippets to extend UX in Roam Research
+An index repository of personal code snippets I use in my Roam Research database
+
+ - **roam-copy-ref** : provides a copy-to-clipboard button to select blocks (made with the lightweight library [clipboard.js](https://clipboardjs.com)). It's the formatted (not raw) content that is copied : bold, italics, etc. are preserved. (I use it to copy formatted literature references, hence the name)
+ - **roam-get-linked-refs-data** : adds a data-... attribute to the top block of each page listed in Linked References, containing the page's title. This is handy for applying a specific formatting to certain results (e.g, don't show the breadcrumbs for results from pages called XXX) or adding some database-related functionality.
+ - **roam-get-paper-data** : adds a data-... attribute to particular page references, containing a piece of information related to that page. This is handy for displaying some page-specific information next to each reference instance, for example, or adding some database-related functionality. (I use it to add information about the full literature citation for every paper I reference, and display it on hover)
