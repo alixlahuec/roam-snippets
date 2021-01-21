@@ -1,3 +1,5 @@
 theme: jekyll-theme-minimal
+baseurl: "/roam-snippets"
+url: "www.ae-lhc.com"
 show_downloads: "true"
 description: "A code repository of JavaScript extensions for Roam Research databases"
