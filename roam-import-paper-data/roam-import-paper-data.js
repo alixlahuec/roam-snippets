@@ -167,13 +167,13 @@ function createZoteroContextMenu() {
     backdropDiv.classList.add("bp3-popover-appear-done");
     backdropDiv.classList.add("bp3-popover-enter-done");
     backdropDiv.classList.add("zotero-context-backdrop");
-    backdropDiv.style.cssText = `display: none;`;
+    backdropDiv.style.cssText = `display: none; z-index:25;`;
     var containerDiv = document.createElement("div");
     containerDiv.classList.add("bp3-transition-container");
     containerDiv.classList.add("bp3-popover-appear-done");
     containerDiv.classList.add("bp3-popover-enter-done");
     containerDiv.classList.add("zotero-context-menu");
-    containerDiv.style.cssText = `display: none; width: auto; position: fixed;`;
+    containerDiv.style.cssText = `display: none; width: auto; position: fixed;z-index:25;`;
     var popoverDiv = document.createElement("div");
     popoverDiv.classList.add("bp3-popover");
     popoverDiv.classList.add("bp3-minimal");
