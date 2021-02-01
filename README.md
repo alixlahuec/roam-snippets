@@ -10,7 +10,7 @@ Roam Research is an online software for organizing knowledge, thoughts and writi
  - [roam-copy-ref](roam-copy-ref/README.md)
  - [roam-get-linked-refs-data](roam-get-linked-refs-data/README.md)
  - [roam-get-paper-data](roam-get-paper-data/README.md)
- - [roam-import-paper-data](roam/import-paper-data/README.md) : uses the Zotero Web API to import data into Roam based on citekeys.
+ - [roam-import-paper-data](roam-import-paper-data/README.md) : uses the Zotero Web API to import data into Roam based on citekeys.
 
 ### How to (re-)use this code
 
