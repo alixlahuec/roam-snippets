@@ -391,7 +391,7 @@ function getItemMetadata(item) {
     // Get Item Type
     // Use mapping specified in user-defined typemap, otherwise fall back on typemap_default
     if (item.data.itemType) {
-        let mapping = (typeof(typemap) !== 'undefined' & typemap[item.data.itemType]) ? typemap[item.data.itemType] : typemap_default[item.data.itemType];
+        let mapping = (typeof(typemap) === 'undefined' | !typemap[item.data.itemType]) ? typemap_default[item.data.itemType] : typemap[item.data.itemType];
         metadata.push("Type:: " + "[[" + mapping + "]]");
     }
 
@@ -467,12 +467,12 @@ function formatData(item) {
     // Check if a function has been specified for the item's specific type
     try{
         let items_funcmap = typeof(funcmap) !== 'undefined' ? funcmap : funcmap_default;
-        if (items_funcmap[type]) {
+        if (!items_funcmap[type] == false) {
             itemData = executeFunctionByName(items_funcmap[type], window, item);
         } else {
             // Otherwise use the default formatting function
             // If user specified funcmap but it doesn't contain a DEFAULT setting, fall back on the DEFAULT in funcmap_default
-            let items_funcmap_default = items_funcmap.DEFAULT ? items_funcmap.DEFAULT : funcmap_default.DEFAULT;
+            let items_funcmap_default = (!items_funcmap.DEFAULT == false) ? items_funcmap.DEFAULT : funcmap_default.DEFAULT;
             try {
                 itemData = executeFunctionByName(items_funcmap_default, window, item);
             } catch (e) {
