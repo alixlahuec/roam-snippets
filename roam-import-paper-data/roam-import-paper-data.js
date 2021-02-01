@@ -395,7 +395,12 @@ function getItemMetadata(item) {
     // Get Item Type
     // Use mapping specified in user-defined typemap, otherwise fall back on typemap_default
     if (item.data.itemType) {
-        let mapping = (typeof(typemap) === 'undefined' | !typemap[item.data.itemType]) ? typemap_default[item.data.itemType] : typemap[item.data.itemType];
+        let mapping = typemap_default[item.data.itemType];
+        if(typeof(typemap) !== 'undefined'){
+            if(typemap[item.data.itemType]){
+                mapping = typemap[item.data.itemType];
+            }
+        }
         metadata.push("Type:: " + "[[" + mapping + "]]");
     }
 
