@@ -291,7 +291,7 @@ async function requestZoteroData(requestObject) {
     ZoteroData = null;
     ZoteroData = await fetchZoteroData(requestObject.apikey, requestObject.dataURI, requestObject.params);
     // TODO: Add handling of non-200 response codes from the API
-    if (typeof (ZoteroData) !== 'undefined' | ZoteroData == null) {
+    if (typeof (ZoteroData) === 'undefined' | ZoteroData == null) {
         return {
             dataAvailable: false
         }
