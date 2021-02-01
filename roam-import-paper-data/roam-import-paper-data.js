@@ -139,7 +139,8 @@ async function zoteroDataGetter() {
         document.getElementById('zotero-data-icon').removeAttribute("style");
     }
 }
-// DONE
+// DONE (but for some reason it doesn't get called when new refcitekeys are added to the page ?!)
+// Also, since for every API request a citekey needs only to be checked once, this could be sped up by only checking those that don't have a value for data-zotero-bib yet
 function checkCitekeys(){
     // Check all citekeys against the items in ZoteroData
     let citekeys = document.querySelectorAll('.ref-citekey');
@@ -238,6 +239,16 @@ function addZoteroContextMenuListener() {
     var refCitekeys = document.querySelectorAll(".ref-citekey");
     for (var i = 0; i < refCitekeys.length; i++) {
         var ref = refCitekeys[i];
+
+        // Handle case where item hasn't been checked against data yet
+        if(!ref.dataset.zoteroBib){
+            if(ZoteroData.find(function (libItem) { return libItem.key == citekeys[i].dataset.linkTitle.replace("@", "") })){
+                citekeys[i].dataset.zoteroBib = "inLibrary";
+            } else {
+                citekeys[i].dataset.zoteroBib = "notFound";
+            }
+        }
+
         // Only add a listener for context meny if the item has been found in the library
         // I'm not handling the case where the item has no data-zotero-bib attribute or where data-zotero-bib is equal to something else
         // Maybe I should make that attribute a boolean - for now it seems there are only 2 cases (found/not found), until I implement an "Update data" functionality ?
