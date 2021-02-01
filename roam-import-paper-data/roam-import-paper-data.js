@@ -507,7 +507,7 @@ function addItemData(pageRef) {
             if (itemData.length > 0) {
                 // Items have to be added in reverse because of mandatory 'order' parameter (defaults to 0 in the function I wrote, so not explicitly set here)
                 let flippedData = itemData.reverse();
-                flippedData.forEach(function (blockString) { addBlock(blockString, uid = pageUID) });
+                flippedData.forEach(function (blockString) { addBlock(uid = pageUID, blockString = blockString, order = 0) });
             }
         }
     } catch (e) {
