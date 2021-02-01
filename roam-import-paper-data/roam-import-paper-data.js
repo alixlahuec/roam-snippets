@@ -113,6 +113,7 @@ async function zoteroDataGetter() {
                 Error("API request did not return a dataset ; please check your request specification");
             } else {
                 document.getElementById('zotero-data-icon').setAttribute("status", "on");
+                document.getElementById('zotero-data-icon').style = "background-color: #fd9d0d63;"
                 refCitekeyFound = false;
                 do {
                     let refs = document.getElementsByClassName("rm-page-ref");
