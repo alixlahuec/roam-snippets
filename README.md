@@ -16,4 +16,5 @@ Roam Research is an online software for organizing knowledge, thoughts and writi
 There are a few options to make use of the code snippets I maintain here : 
  - Load an extension directly by using GitHub as CDN
  - Copy the contents of the JavaScript file for the extension, and paste them into a Roam code block nested under `{{[[roam/js]]}}` 
+ 
 Specific installation instructions are provided on each extension's page.
