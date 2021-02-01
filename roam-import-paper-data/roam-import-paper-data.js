@@ -212,7 +212,7 @@ function removeRequestResults() {
     }
 }
 // DONE
-const toggleMenu = command => {
+const toggleZoteroDataMenu = command => {
     // console.log("TOGGLING MENU: " + command)
     zoteroContextMenu.style.display = command === "show" ? "block" : "none";
     zoteroContextBackdrop.style.display = command === "show" ? "block" : "none";
@@ -226,7 +226,7 @@ const toggleMenu = command => {
 const setPosition = ({ top, left }) => {
     zoteroContextMenu.style.left = `${left}px`;
     zoteroContextMenu.style.top = `${top}px`;
-    toggleMenu("show");
+    toggleZoteroDataMenu("show");
 }
 // DONE (limited handling)
 function addContextMenuListener() {
@@ -254,7 +254,7 @@ function addContextMenuListener() {
 function setupZoteroContextMenu() {
     window.addEventListener("click", e => {
         if (zoteroDataMenuVisible) {
-            toggleMenu("hide");
+            toggleZoteroDataMenu("hide");
         }
     });
 
