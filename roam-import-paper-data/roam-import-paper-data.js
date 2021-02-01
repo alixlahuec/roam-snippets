@@ -76,7 +76,7 @@ function findRefCitekeys(refs) {
             // Only do this for page refs for now, we'll see about tags later or not at all
             if (parentDiv.dataset.linkTitle.startsWith("@")) {
                 if (parentDiv.classList.contains("ref-citekey")) {
-                    matched = true;
+                    matched = false;
                 } else {
                     parentDiv.classList.add("ref-citekey");
                     matched = true;
