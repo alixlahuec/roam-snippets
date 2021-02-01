@@ -124,6 +124,8 @@ async function zoteroDataGetter() {
                 document.addEventListener('blur', runZoteroDataGetter, true);
                 window.addEventListener('locationchange', runZoteroDataGetter, true);
                 addZoteroContextMenuListener();
+
+                document.getElementById('zotero-data-icon').style = "background-color: #60f06042;";
             }
         }
     } else {
@@ -132,6 +134,8 @@ async function zoteroDataGetter() {
         removeRequestResults();
         document.removeEventListener('blur', runZoteroDataGetter, true);
         window.removeEventListener('locationchange', runZoteroDataGetter, true);
+
+        document.getElementById('zotero-data-icon').removeAttribute("style");
     }
 }
 // DONE
