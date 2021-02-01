@@ -96,7 +96,7 @@ function runZoteroDataGetter() {
         } while (refCitekeyFound == true);
     }, 1000);
     checkCitekeys();
-    addContextMenuListener();
+    addZoteroContextMenuListener();
 }
 // What troubles me with the async here is that this function is exclusively called in one context - when the icon is clicked (if there are problems troubleshooting should probably start here)
 // DONE (I hope...)
@@ -123,7 +123,7 @@ async function zoteroDataGetter() {
 
                 document.addEventListener('blur', runZoteroDataGetter, true);
                 window.addEventListener('locationchange', runZoteroDataGetter, true);
-                addContextMenuListener();
+                addZoteroContextMenuListener();
             }
         }
     } else {
@@ -151,7 +151,7 @@ function checkCitekeys(){
 
 // From Tyler Wince's Unlink Finder extension : https://github.com/tylerwince/roam-plugins/blob/main/unlink-finder/unlink-finder.js
 // DONE
-function createCustomContextMenu() {
+function createZoteroContextMenu() {
     var portalDiv = document.createElement("div");
     portalDiv.classList.add("bp3-portal");
     var overlayDiv = document.createElement("div");
@@ -229,7 +229,7 @@ const setPositionZoteroDataMenu = ({ top, left }) => {
     toggleZoteroDataMenu("show");
 }
 // DONE (limited handling)
-function addContextMenuListener() {
+function addZoteroContextMenuListener() {
     var refCitekeys = document.querySelectorAll(".ref-citekey");
     for (var i = 0; i < refCitekeys.length; i++) {
         var ref = refCitekeys[i];
