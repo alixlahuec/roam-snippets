@@ -298,6 +298,7 @@ async function requestZoteroData(requestObject) {
     } else {
         //Traverse array of items and for those that have a pinned citekey, change the value of ITEM.key to the citekey instead of the Zotero item key
         // Note : the Zotero item key will still be available in ITEM.data.key
+        ZoteroData = ZoteroData.data;
         ZoteroData.forEach(function (item, index, array) { if (item.data.extra.includes('Citation Key: ')) { array[index].key = item.data.extra.match('Citation Key: (.+)')[1] } });
         return {
             dataAvailable: true
