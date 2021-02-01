@@ -132,6 +132,7 @@ async function zoteroDataGetter() {
     } else {
         // Behavior if the button is being turned OFF
         document.getElementById('zotero-data-icon').setAttribute("status", "off");
+        ZoteroData = null;
         removeRequestResults();
         document.removeEventListener('blur', runZoteroDataGetter, true);
         window.removeEventListener('locationchange', runZoteroDataGetter, true);
