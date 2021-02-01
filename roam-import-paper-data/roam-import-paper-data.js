@@ -223,7 +223,7 @@ const toggleZoteroDataMenu = command => {
     }
 }
 // DONE
-const setPosition = ({ top, left }) => {
+const setPositionZoteroDataMenu = ({ top, left }) => {
     zoteroContextMenu.style.left = `${left}px`;
     zoteroContextMenu.style.top = `${top}px`;
     toggleZoteroDataMenu("show");
@@ -243,7 +243,7 @@ function addContextMenuListener() {
                     left: e.pageX,
                     top: e.pageY
                 };
-                setPosition(origin);
+                setPositionZoteroDataMenu(origin);
                 elementToUseForDataImport = e.target;
                 return false;
             });
