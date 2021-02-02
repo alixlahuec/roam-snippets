@@ -119,6 +119,6 @@ There are 3 user-defined variables that can be set ; they should be declared glo
     tvBroadcast: "TV broadcast",
     videoRecording: "Recording",
     webpage: "Webpage",
-}
+    }
     ```
 
