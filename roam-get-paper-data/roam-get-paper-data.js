@@ -29,9 +29,11 @@ document.addEventListener('mouseover', (e) => {
                 if (isPageTag) { pageName = parentDiv.dataset.tag; }
 
                 let attrTitle = window.roamAlphaAPI.q('[:find ?bString :in $ ?pageName :where [?page :node/title ?pageName] [?page :block/children ?titleBlock] [?titleBlock :block/string ?bString] [?titleBlock :block/refs ?bAttr] [?bAttr :node/title "Title"]]', pageName);
-                if (typeof (attrTitle[0] !== 'undefined')) {
-                    console.log('Now adding the title that was found');
-                    parentDiv.dataset.paperTitle = attrTitle[0][0].replace("Title:: ", "");
+                if(attrTitle.length > 0){
+                    if (typeof (attrTitle[0] !== 'undefined')) {
+                        console.log('Now adding the title that was found');
+                        parentDiv.dataset.paperTitle = attrTitle[0][0].replace("Title:: ", "");
+                    }
                 }
             }
         }
