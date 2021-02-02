@@ -263,7 +263,7 @@ function addZoteroContextMenuListener() {
 
 // This is the function called to add an event listener for context menu to refcitekeys that have been found
 // Hopefully it'll ensure only one event listener is ever added to a given element & fix the problem of not seeing the context menu
-function addListenerToRefCitekey(el) {
+function addListenerToRefCitekey(e) {
     e.preventDefault();
     const origin = {
         left: e.pageX,
