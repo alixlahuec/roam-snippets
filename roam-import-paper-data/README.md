@@ -39,6 +39,18 @@ There are 3 user-defined variables that can be set ; they should be declared glo
         thesis: "getAllData",
         DEFAULT: "getItemMetadata"
     }
+    ``` 
+    The above will import _all data_ for journal articles, reports, and theses, and _metadata only_ for all other item types. 
+    + The built-in `getItemMetadata()` function produces the following blocks : 
+    ```js
+    Title:: <title>
+    Author(s):: // comma-separated list of each item in <creators> represented as [[<firstName> <lastName>]] ; if <creatorType> is not "author", its value will be appended between parentheses after the name
+    Abstract:: <abstract_note> // if Roam Markdown is used, it will be rendered
+    Type:: // the value returned by passing <itemType> to either typemap or typemap_default
+    Publication:: [[<publicationTitle>]] (if exists) or [[<bookTitle>]] (if exists)
+    URL : <url>
+    Date Added:: [[<dateAdded> in Roam Daily Notes Page format]]
+    Tags:: // comma-separated list of each <tags> represented as #[[<tag>]] so that multi-word is handled
     ```
 
  - **typemap** (optional) is an array providing a mapping between item types and the tags that should be used to categorize them in Roam. The extension provides a **typemap_default**, which is forked from the [melat0nin/zotero-roam-export](https://github.com/melat0nin/zotero-roam-export) plugin for Zotero. Otherwise, the user can specify custom mappings through **typemap**, for as many or as few item types as desired.
@@ -50,6 +62,43 @@ There are 3 user-defined variables that can be set ; they should be declared glo
         journalArticle: "Paper",
         report: "Document"
     }
+    ``` 
+    The above will format a book section's metadata with `Type:: [[Book Chapter]]`, a journal article with `Type:: [[Paper]]`, a report with `Type:: [[Document]]`, and all other item types according to typemap_default, which is the following :
+    ```js
+    const typemap_default = {
+    artwork: "Illustration",
+    audioRecording: "Recording",
+    bill: "Legislation",
+    blogPost: "Blog post",
+    book: "Book",
+    bookSection: "Chapter",
+    "case": "Legal case",
+    computerProgram: "Data",
+    conferencePaper: "Conference paper",
+    email: "Letter",
+    encyclopediaArticle: "Encyclopaedia article",
+    film: "Film",
+    forumPost: "Forum post",
+    hearing: "Hearing",
+    instantMessage: "Instant message",
+    interview: "Interview",
+    journalArticle: "Article",
+    letter: "Letter",
+    magazineArticle: "Magazine article",
+    manuscript: "Manuscript",
+    map: "Image",
+    newspaperArticle: "Newspaper article",
+    patent: "Patent",
+    podcast: "Podcast",
+    presentation: "Presentation",
+    radioBroadcast: "Radio broadcast",
+    report: "Report",
+    statute: "Legislation",
+    thesis: "Thesis",
+    tvBroadcast: "TV broadcast",
+    videoRecording: "Recording",
+    webpage: "Webpage",
+}
     ```
 
 
