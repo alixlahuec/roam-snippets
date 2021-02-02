@@ -216,6 +216,7 @@ function removeRequestResults() {
         // Leave in the class so that the search doesn't start all over again if another request is made
         // But make sure to remove the attribute to allow for a fresh check
         citekeyRefs[i].removeAttribute("data-zotero-bib");
+        citekeyRefs[i].removeEventListener("contextmenu", addListenerToRefCitekey);
     }
 }
 // DONE
@@ -254,19 +255,24 @@ function addZoteroContextMenuListener() {
         // I'm not handling the case where the item has no data-zotero-bib attribute or where data-zotero-bib is equal to something else
         // Maybe I should make that attribute a boolean - for now it seems there are only 2 cases (found/not found), until I implement an "Update data" functionality ?
         if (ref.dataset.zoteroBib == "inLibrary") {
-            ref.firstElementChild.addEventListener("contextmenu", function (e) {
-                e.preventDefault();
-                const origin = {
-                    left: e.pageX,
-                    top: e.pageY
-                };
-                setPositionZoteroDataMenu(origin);
-                elementToUseForDataImport = e.target;
-                return false;
-            });
+            ref.firstElementChild.addEventListener("contextmenu", addListenerToRefCitekey);
         }
     }
 }
+
+// This is the function called to add an event listener for context menu to refcitekeys that have been found
+// Hopefully it'll ensure only one event listener is ever added to a given element & fix the problem of not seeing the context menu
+function addListenerToRefCitekey(el) {
+    e.preventDefault();
+    const origin = {
+        left: e.pageX,
+        top: e.pageY
+    };
+    setPositionZoteroDataMenu(origin);
+    elementToUseForDataImport = e.target;
+    return false;
+}
+
 // DONE
 function setupZoteroContextMenu() {
     window.addEventListener("click", e => {
