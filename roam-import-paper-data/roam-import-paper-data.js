@@ -250,7 +250,7 @@ function addZoteroContextMenuListener() {
             }
         }
 
-        // Only add a listener for context meny if the item has been found in the library
+        // Only add a listener for context menu if the item has been found in the library
         // I'm not handling the case where the item has no data-zotero-bib attribute or where data-zotero-bib is equal to something else
         // Maybe I should make that attribute a boolean - for now it seems there are only 2 cases (found/not found), until I implement an "Update data" functionality ?
         if (ref.dataset.zoteroBib == "inLibrary") {
@@ -316,7 +316,7 @@ async function requestZoteroData(requestObject) {
         //Traverse array of items and for those that have a pinned citekey, change the value of ITEM.key to the citekey instead of the Zotero item key
         // Note : the Zotero item key will still be available in ITEM.data.key
         ZoteroData = ZoteroData.data;
-        ZoteroData.forEach(function (item, index, array) { if (item.data.extra.includes('Citation Key: ')) { array[index].key = item.data.extra.match('Citation Key: (.+)')[1] } });
+        ZoteroData.forEach(function (item, index, array) { if(typeof(item.data.extra) === 'undefined'){if (item.data.extra.includes('Citation Key: ')) { array[index].key = item.data.extra.match('Citation Key: (.+)')[1] }} });
         return {
             dataAvailable: true
         }
