@@ -255,7 +255,8 @@ function addZoteroContextMenuListener() {
         // I'm not handling the case where the item has no data-zotero-bib attribute or where data-zotero-bib is equal to something else
         // Maybe I should make that attribute a boolean - for now it seems there are only 2 cases (found/not found), until I implement an "Update data" functionality ?
         if (ref.dataset.zoteroBib == "inLibrary") {
-            ref.firstElementChild.addEventListener("contextmenu", addListenerToRefCitekey);
+            // Robust regardless of brackets
+                ref.querySelector('.rm-page-ref').addEventListener("contextmenu", addListenerToRefCitekey);
         }
     }
 }
