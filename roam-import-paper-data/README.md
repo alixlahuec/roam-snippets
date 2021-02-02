@@ -13,6 +13,26 @@ Summary of the extension :
 
 ### Example of use in a {{[[roam/js]]}} block
 
+To get started, add the following in a {{[[roam/js]]}} block :
+
+```js
+USER_REQUEST = {
+    apikey: 'your API key', // Get this from zotero.org/settings/keys ->  "Create new private key"
+    dataURI: 'the data URI to use for the request', // Construct this using the Zotero API documentation : https://www.zotero.org/support/dev/web_api/v3/basics#user_and_group_library_urls
+    params: 'the search parameters to use for the request' // Construct this using the Zotero API documentation : https://www.zotero.org/support/dev/web_api/v3/basics#read_requests
+    // If params is left blank, the request will use default settings (i.e, return *all data* in JSON format)
+}
+
+var s = document.createElement("script");
+s.src = "https://greenmeen.github.io/roam-snippets/roam-import-paper-data/roam-import-paper-data.js";
+s.id = "roam-import-paper-data";
+s.type = "text/javascript";
+document.getElementsByTagName("body")[0].appendChild(s);
+```
+
+Note : to construct the data URI, you'll need to obtain your user ID (or the group ID if you want to get results from a group library). **User IDs are not the same as usernames** ; each user has a unique user ID to be used for authentication in API requests, so that only you can make a request for your private data. It's available on the [Feeds/API page in your web settings](www.zotero.org/settings/keys).
+
+
 #### User options
 
 There are 3 user-defined variables that can be set ; they should be declared globally, otherwise they won't be available to the extension.
@@ -26,6 +46,7 @@ There are 3 user-defined variables that can be set ; they should be declared glo
     params: 'limit=100'
     }
     ``` 
+    The above queries for _top-level items_ in the collection with ID `<collection_id>` in the library of user with ID `<user_id>`.
 
 - **funcmap** (optional) is an array providing a mapping between item types and the functions that should be used for formatting. The extension provides a default formatting function : `getItemMetadata` ; two other functions, `getItemNotes`, and `getAllData` (metadata + notes) will also be provided soon. Otherwise, the user can define their own functions and call them for the desired item types through **funcmap**. 
     + All formatting functions must take a single argument (the item's array of data, as returned by the Zotero Web API) and return a flat array of string elements, each corresponding to a Roam block to be added.
@@ -101,13 +122,3 @@ There are 3 user-defined variables that can be set ; they should be declared glo
 }
     ```
 
-
-#### Loading the extension
-
-```js
-var s = document.createElement("script");
-s.src = "https://greenmeen.github.io/roam-snippets/roam-import-paper-data/roam-import-paper-data.js";
-s.id = "roam-import-paper-data";
-s.type = "text/javascript";
-document.getElementsByTagName("body")[0].appendChild(s);
-```
