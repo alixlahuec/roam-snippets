@@ -216,7 +216,7 @@ function removeRequestResults() {
         // Leave in the class so that the search doesn't start all over again if another request is made
         // But make sure to remove the attribute to allow for a fresh check
         citekeyRefs[i].removeAttribute("data-zotero-bib");
-        citekeyRefs[i].removeEventListener("contextmenu", addListenerToRefCitekey);
+        citekeyRefs[i].querySelector('.rm-page-ref').removeEventListener("contextmenu", addListenerToRefCitekey);
     }
 }
 // DONE
