@@ -59,7 +59,7 @@ There are 3 user-defined variables that can be set ; they should be declared glo
         }
 
         funcmap = {
-            journalArticle = "customPaperFormat"
+            journalArticle: "customPaperFormat"
         }
         ``` 
     + Nesting isn't supported yet because the roamAlphaAPI requires a parent UID when adding a block.
