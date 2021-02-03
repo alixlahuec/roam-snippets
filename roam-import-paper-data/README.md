@@ -49,7 +49,19 @@ There are 3 user-defined variables that can be set ; they should be declared glo
     The above queries for _top-level items_ in the collection with ID `<collection_id>` in the library of user with ID `<user_id>`.
 
 - **funcmap** (optional) is an array providing a mapping between item types and the functions that should be used for formatting. The extension provides a default formatting function : `getItemMetadata` ; two other functions, `getItemNotes`, and `getAllData` (metadata + notes) will also be provided soon. Otherwise, the user can define their own functions and call them for the desired item types through **funcmap**. 
-    + All formatting functions must take a single argument (the item's array of data, as returned by the Zotero Web API) and return a flat array of string elements, each corresponding to a Roam block to be added.
+    + All formatting functions must take a single argument (the item's array of data, as returned by the Zotero Web API) and return a flat array of string elements, each corresponding to a Roam block to be added. `Important: When creating a custom formatting function in your roam/js block, declare the function with window.funcName = function(item){...} rather than function funcName(item){...} . This will ensure it's available in the window global object -- it will throw an error otherwise.` 
+        * Example :
+        ```js
+        window.customPaperFormat = function(item){
+            let metadata = [];
+            // Do stuff that pushes string elements to the metadata array
+            return metadata;
+        }
+
+        funcmap = {
+            journalArticle = "customPaperFormat"
+        }
+        ``` 
     + Nesting isn't supported yet because the roamAlphaAPI requires a parent UID when adding a block.
     + To determine which formatting function to use for an item, the extension will check the following and use the first defined value : `funcmap['itemType']` > `funcmap['DEFAULT']` > `funcmap_default['itemType']` > `funcmap_default['DEFAULT']`. 
     + Example :
