@@ -50,7 +50,6 @@ let zoteroContextMenuOptions = null;
 let zoteroDataMenuVisible = false;
 let elementToUseForDataImport = null;
 
-// From Tyler Wince's Unlink Finder extension : https://tylerwince.github.io/roam-plugins-dev/unlink-finder/unlink-finder.js
 if (document.getElementById('zotero-data-icon') == null) {
     zoteroDataButton();
     createZoteroContextMenu();
@@ -62,13 +61,9 @@ if (document.getElementById('zotero-data-icon') == null) {
 
 // FUNCTIONS
 
-// This is called by runZoteroDataGetter, while refCitekeyFound (?)
-// It's the equivalent of the findTargetNodes function in Unlink Finder
-// DONE (I think ? I don't really understand how these do/while loops work)
 function findRefCitekeys(refs) {
     matched = false;
     for (i = 0; i < refs.length; i++) {
-        // This section replaces the call to spanWrapper()
         let parentDiv = refs[i].parentElement;
         if (typeof (parentDiv.dataset.linkTitle) === 'undefined') {
             continue;
@@ -86,7 +81,7 @@ function findRefCitekeys(refs) {
     }
     return matched;
 }
-// DONE (although I find the do/while structure weird here)
+// TODO: Check if the do/while structure could be improved here
 function runZoteroDataGetter() {
     refCitekeyFound = false;
     setTimeout(function () {
@@ -98,22 +93,21 @@ function runZoteroDataGetter() {
     checkCitekeys();
     addZoteroContextMenuListener();
 }
-// What troubles me with the async here is that this function is exclusively called in one context - when the icon is clicked (if there are problems troubleshooting should probably start here)
-// DONE (I hope...)
+
 async function zoteroDataGetter() {
     // Behavior if the button is getting turned ON
     if (document.getElementById('zotero-data-icon').getAttribute("status") == "off") {
+        document.getElementById('zotero-data-icon').style = "background-color: #fd9d0d63;";
         // First make the API request ; if it fails, then there's no point in running the rest, and status should stay as 'off'
         // Code below will hopefully properly try to call the Zotero API, fail adequately, and maybe not wreck all my code by making me turn a whole cascade of functions into async/await structure
         if (typeof (USER_REQUEST) === 'undefined') {
-            Error('Please define the USER_REQUEST variable in your {{[[roam/js]]}} block, as an array of {apikey, dataURI, params}');
+            throw new Error('The USER_REQUEST variable must be defined to make an API request. It should be an array of {apikey, dataURI, params}.');
         } else {
             let apiRequest = await requestZoteroData(USER_REQUEST);
             if (apiRequest.dataAvailable == false) {
-                Error("API request did not return a dataset ; please check your request specification");
-            } else {
+                throw new Error("The API request encountered a problem. Please check your request specification.");
+            } else if(apiRequest.dataAvailable) {
                 document.getElementById('zotero-data-icon').setAttribute("status", "on");
-                document.getElementById('zotero-data-icon').style = "background-color: #fd9d0d63;"
                 refCitekeyFound = false;
                 do {
                     let refs = document.getElementsByClassName("rm-page-ref");
@@ -127,6 +121,7 @@ async function zoteroDataGetter() {
                 addZoteroContextMenuListener();
 
                 document.getElementById('zotero-data-icon').style = "background-color: #60f06042;";
+                console.log('The results of the API request have been received ; you can check them by inspecting the value of the ZoteroData object. Data import context menu should now be available.')
             }
         }
     } else {
@@ -138,26 +133,39 @@ async function zoteroDataGetter() {
         window.removeEventListener('locationchange', runZoteroDataGetter, true);
 
         document.getElementById('zotero-data-icon').removeAttribute("style");
-    }
-}
-// DONE (but for some reason it doesn't get called when new refcitekeys are added to the page ?!)
-// Also, since for every API request a citekey needs only to be checked once, this could be sped up by only checking those that don't have a value for data-zotero-bib yet
-function checkCitekeys(){
-    // Check all citekeys against the items in ZoteroData
-    let citekeys = document.querySelectorAll('.ref-citekey');
-    if(citekeys.length > 0){
-        for(i = 0; i < citekeys.length; i++){
-            if(ZoteroData.find(function (libItem) { return libItem.key == citekeys[i].dataset.linkTitle.replace("@", "") })){
-                citekeys[i].dataset.zoteroBib = "inLibrary";
-            } else {
-                citekeys[i].dataset.zoteroBib = "notFound";
-            }
-        }
+        console.log('Data and request outputs have been removed');
     }
 }
 
-// From Tyler Wince's Unlink Finder extension : https://github.com/tylerwince/roam-plugins/blob/main/unlink-finder/unlink-finder.js
-// DONE
+function checkCitekeys() {
+    let refCitekeys = document.querySelectorAll('.ref-citekey');
+    let newMatches = 0;
+    let newUnmatches = 0;
+
+    if (refCitekeys.length > 0) {
+        for (i = 0; i < refCitekeys.length; i++) {
+            let ref = refCitekeys[i];
+            // References that have a data-zotero-bib attribute have already been checked, let's not check them again
+            if (ref.dataset.zoteroBib) {
+                continue;
+            } else {
+                // For items that haven't been checked yet, look for their citekey in ZoteroData
+                if (ZoteroData.find(function (libItem) { return libItem.key == ref.dataset.linkTitle.replace("@", "") })) {
+                    ref.dataset.zoteroBib = "inLibrary";
+                    newMatches = newMatches + 1;
+                } else {
+                    ref.dataset.zoteroBib = "notFound";
+                    newUnmatches = newUnmatches + 1;
+                }
+            }
+        }
+    }
+
+    if(newMatches > 0 | newUnmatches > 0){
+        console.log('New matched citekeys: '+newMatches+', New unmatched citekeys: '+newUnmatches);
+    }
+}
+
 function createZoteroContextMenu() {
     var portalDiv = document.createElement("div");
     portalDiv.classList.add("bp3-portal");
@@ -209,19 +217,19 @@ function createZoteroContextMenu() {
 
     document.getElementById("app").appendChild(portalDiv);
 }
-// DONE
+
 function removeRequestResults() {
-    citekeyRefs = document.getElementsByClassName("ref-citekey");
-    for (i = 0; i < citekeyRefs.length; i++) {
+    refCitekeys = document.querySelectorAll("ref-citekey");
+    for (i = 0; i < refCitekeys.length; i++) {
+        let ref = refCitekeys[i];
         // Leave in the class so that the search doesn't start all over again if another request is made
-        // But make sure to remove the attribute to allow for a fresh check
-        citekeyRefs[i].removeAttribute("data-zotero-bib");
-        citekeyRefs[i].querySelector('.rm-page-ref').removeEventListener("contextmenu", addListenerToRefCitekey);
+        // But make sure to remove the attribute to allow for a fresh check, and the context menu listener as well
+        ref.removeAttribute("data-zotero-bib");
+        ref.querySelector('.rm-page-ref').removeEventListener("contextmenu", addListenerToRefCitekey);
     }
 }
-// DONE
+
 const toggleZoteroDataMenu = command => {
-    // console.log("TOGGLING MENU: " + command)
     zoteroContextMenu.style.display = command === "show" ? "block" : "none";
     zoteroContextBackdrop.style.display = command === "show" ? "block" : "none";
     if (command == "show") {
@@ -230,13 +238,13 @@ const toggleZoteroDataMenu = command => {
         zoteroDataMenuVisible = false
     }
 }
-// DONE
+
 const setPositionZoteroDataMenu = ({ top, left }) => {
     zoteroContextMenu.style.left = `${left}px`;
     zoteroContextMenu.style.top = `${top}px`;
     toggleZoteroDataMenu("show");
 }
-// DONE (limited handling)
+
 function addZoteroContextMenuListener() {
     var refCitekeys = document.querySelectorAll(".ref-citekey");
     for (var i = 0; i < refCitekeys.length; i++) {
@@ -244,25 +252,23 @@ function addZoteroContextMenuListener() {
 
         // Handle case where item hasn't been checked against data yet
         if(!ref.dataset.zoteroBib){
-            if(ZoteroData.find(function (libItem) { return libItem.key == citekeys[i].dataset.linkTitle.replace("@", "") })){
-                citekeys[i].dataset.zoteroBib = "inLibrary";
+            if(ZoteroData.find(function (libItem) { return libItem.key == ref.dataset.linkTitle.replace("@", "") })){
+                ref.dataset.zoteroBib = "inLibrary";
             } else {
-                citekeys[i].dataset.zoteroBib = "notFound";
+                ref.dataset.zoteroBib = "notFound";
             }
         }
 
         // Only add a listener for context menu if the item has been found in the library
-        // I'm not handling the case where the item has no data-zotero-bib attribute or where data-zotero-bib is equal to something else
-        // Maybe I should make that attribute a boolean - for now it seems there are only 2 cases (found/not found), until I implement an "Update data" functionality ?
         if (ref.dataset.zoteroBib == "inLibrary") {
             // Robust regardless of brackets
                 ref.querySelector('.rm-page-ref').addEventListener("contextmenu", addListenerToRefCitekey);
+        } else if (ref.dataset.zoteroBib == "notFound") {
+            console.log('This citekey was checked against the contents of ZoteroData but didn\'t match any item. Make sure your citekeys are pinned.');
         }
     }
 }
 
-// This is the function called to add an event listener for context menu to refcitekeys that have been found
-// Hopefully it'll ensure only one event listener is ever added to a given element & fix the problem of not seeing the context menu
 function addListenerToRefCitekey(e) {
     e.preventDefault();
     const origin = {
@@ -274,7 +280,6 @@ function addListenerToRefCitekey(e) {
     return false;
 }
 
-// DONE
 function setupZoteroContextMenu() {
     window.addEventListener("click", e => {
         if (zoteroDataMenuVisible) {
@@ -290,7 +295,7 @@ function setupZoteroContextMenu() {
         })
     }
 }
-// DONE (hopefully calling an async function onclick will be fine)
+
 function zoteroDataButton() {
     var button = document.createElement('span');
     button.classList.add('bp3-popover-wrapper');
@@ -310,29 +315,32 @@ function zoteroDataButton() {
     roamTopbar[0].appendChild(button);
     icon.onclick = zoteroDataGetter;
 }
-// DONE
+
 async function requestZoteroData(requestObject) {
     ZoteroData = null;
-    ZoteroData = await fetchZoteroData(requestObject.apikey, requestObject.dataURI, requestObject.params);
+    try{
+        ZoteroData = await fetchZoteroData(requestObject.apikey, requestObject.dataURI, requestObject.params);
+    } catch(e){
+        console.error(e);
+    }
     // TODO: Add handling of non-200 response codes from the API
-    if (typeof (ZoteroData) === 'undefined' | ZoteroData == null) {
-        return {
-            dataAvailable: false
-        }
-    } else {
-        //Traverse array of items and for those that have a pinned citekey, change the value of ITEM.key to the citekey instead of the Zotero item key
+    if(typeof(ZoteroData) !== 'undefined' && ZoteroData != null){
+        // Traverse array of items and for those that have a pinned citekey, change the value of ITEM.key to the citekey instead of the Zotero item key
         // Note : the Zotero item key will still be available in ITEM.data.key
         ZoteroData = ZoteroData.data;
         ZoteroData.forEach(function (item, index, array) { if(typeof(item.data.extra) !== 'undefined'){if (item.data.extra.includes('Citation Key: ')) { array[index].key = item.data.extra.match('Citation Key: (.+)')[1] }} });
         return {
             dataAvailable: true
         }
+    } else {
+        return {
+            dataAvailable: false
+        }
     }
 }
 
-/* From Stack Overflow : https://stackoverflow.com/questions/45018338/javascript-fetch-api-how-to-save-output-to-variable-as-an-object-not-the-prom/45018619 */
-// DONE
-async function fetchZoteroData(apiKey, dataURI, params = "limit=100") {
+// From Stack Overflow : https://stackoverflow.com/questions/45018338/javascript-fetch-api-how-to-save-output-to-variable-as-an-object-not-the-prom/45018619 
+async function fetchZoteroData(apiKey, dataURI, params) {
     let requestURL = "https://api.zotero.org/" + dataURI + "?" + params;
     try {
         let response = await fetch(requestURL, {
@@ -362,12 +370,11 @@ async function fetchZoteroData(apiKey, dataURI, params = "limit=100") {
         console.error(error);
     }
 }
-// DONE
+
 function addBlock(uid, blockString, order) {
     roamAlphaAPI.createBlock({ 'location': { 'parent-uid': uid, 'order': order }, 'block': { 'string': blockString } });
 }
 // Utility function to convert day of month into ordinal format for Roam date formatting
-// DONE
 function makeOrdinal(i) {
     let j = i % 10;
     if (j == 1 & i != 11) {
@@ -387,7 +394,6 @@ function makeOrdinal(i) {
 // Default addition, FYI, is as direct children of the page ; nesting requires getting a block UID so it's harder to do right now (would require multi-step process probably)
 function getItemMetadata(item) {
     let metadata = [];
-    // Do type-specific stuff to grab and format metadata
 
     // Get title
     if (item.data.title) {
@@ -458,7 +464,7 @@ function getItemNotes(item) {
     // Do stuff to grab and format notes
     return notes;
 }
-// DONE (but won't handle any nesting)
+// TODO (pending writing of getItemNotes())
 function getAllData(item) {
     let itemData = [];
 
@@ -489,37 +495,45 @@ function executeFunctionByName(functionName, context /*, args */) {
     }
     return context[func].apply(context, args);
 }
-// DONE
+
 function formatData(item) {
     let itemData = [];
     let type = item.data.itemType;
-    // Check if a function has been specified for the item's specific type
-    try{
-        let items_funcmap = typeof(funcmap) !== 'undefined' ? funcmap : funcmap_default;
-        if (!items_funcmap[type] == false) {
-            itemData = executeFunctionByName(items_funcmap[type], window, item);
+    try {
+        // If the user has defined funcmap
+        if (typeof (funcmap) !== 'undefined') {
+            // Check if it specifies a function for the item's type ; if not, check if it specifies a DEFAULT function
+            if (typeof (funcmap[type]) !== 'undefined') {
+                itemData = executeFunctionByName(funcmap[type], window, item);
+            } else if (typeof (funcmap.DEFAULT) !== 'undefined') {
+                itemData = executeFunctionByName(funcmap.DEFAULT, window, item);
+            } else {
+                // Otherwise fall back on funcmap_default
+                if (typeof (funcmap_default[type]) !== 'undefined') {
+                    itemData = executeFunctionByName(funcmap_default[type], window, item);
+                } else {
+                    itemData = executeFunctionByName(funcmap_default.DEFAULT, window, item);
+                }
+            }
         } else {
-            // Otherwise use the default formatting function
-            // If user specified funcmap but it doesn't contain a DEFAULT setting, fall back on the DEFAULT in funcmap_default
-            let items_funcmap_default = (!items_funcmap.DEFAULT == false) ? items_funcmap.DEFAULT : funcmap_default.DEFAULT;
-            try {
-                itemData = executeFunctionByName(items_funcmap_default, window, item);
-            } catch (e) {
-                console.error(e);
+            // If the user didn't define funcmap, go straight to checking funcmap_default
+            if (typeof (funcmap_default[type]) !== 'undefined') {
+                itemData = executeFunctionByName(funcmap_default[type], window, item);
+            } else {
+                itemData = executeFunctionByName(funcmap_default.DEFAULT, window, item);
             }
         }
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     }
     return itemData;
 }
 
-// pageRef is the DOM element with class "rm-page-ref" that is the target of mouse events -- but it's its parent that has the information about the citekey + the page UID
-// DONE
-function addItemData(pageRef) {
+// refSpan is the DOM element with class "rm-page-ref" that is the target of mouse events -- but it's its parent that has the information about the citekey + the page UID
+function addItemData(refSpan) {
     try {
-        let citekey = pageRef.parentElement.dataset.linkTitle.replace("@", ""); // I'll deal with tags later, or not at all
-        let pageUID = pageRef.parentElement.dataset.linkUid;
+        let citekey = refSpan.parentElement.dataset.linkTitle.replace("@", ""); // I'll deal with tags later, or not at all
+        let pageUID = refSpan.parentElement.dataset.linkUid;
 
         let item = ZoteroData.find(function (i) { return i.key == citekey });
         if (item) {
