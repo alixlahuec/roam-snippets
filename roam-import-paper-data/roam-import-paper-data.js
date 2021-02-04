@@ -620,7 +620,7 @@ async function waitForBlockUID(parent_uid, string) {
             }
             // Keep track of attempts to avoid infinite search, and wait a bit before continuing
             tries = tries + 1;
-            await sleep(100);
+            await sleep(75);
         } while (tries < 50 && !found);
         // If after 50 attempts there still isn't a match, throw an error
         console.log(top_block);
