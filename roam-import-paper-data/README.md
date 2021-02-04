@@ -42,28 +42,28 @@ Note : to construct the data URI, you'll need to obtain your user ID (or the gro
 
 There are 3 user-defined variables that can be set ; they should be declared globally, otherwise they won't be available to the extension.
 
- - **USER_REQUEST** (mandatory)
-    + **Value**. An array containing 3 named values : `apikey` (obtained from Zotero), `dataURI` (the set of items to query ; can be a library, a collection, etc.), and `params` (string of request parameters ; the initial `?` should be omitted). For shared graphs, use at your own risk ; your API key will be openly accessible. 
-    + _Example_ :    
-    ```js
-    USER_REQUEST = {
-    apikey: 'XXXXXXXXXXXXXXXXXXXXXXXX',
-    dataURI: 'users/<user_id>/collections/<collection_id>/items/top',
-    params: 'limit=100'
-    }
-    ``` 
-    The above queries for _top-level items_ in the collection with ID `<collection_id>` in the library of user with ID `<user_id>`. It also specifies that the maximum number of results should be returned (`limit=100`).
+#### USER_REQUEST (mandatory)
+   + **Value**. An array containing 3 named values : `apikey` (obtained from Zotero), `dataURI` (the set of items to query ; can be a library, a collection, etc.), and `params` (string of request parameters ; the initial `?` should be omitted). For shared graphs, use at your own risk ; your API key will be openly accessible. 
+   + _Example_ :    
+   ```js
+   USER_REQUEST = {
+   apikey: 'XXXXXXXXXXXXXXXXXXXXXXXX',
+   dataURI: 'users/<user_id>/collections/<collection_id>/items/top',
+   params: 'limit=100'
+   }
+   ``` 
+   The above queries for _top-level items_ in the collection with ID `<collection_id>` in the library of user with ID `<user_id>`. It also specifies that the maximum number of results should be returned (`limit=100`).
 
-- **funcmap** (optional) 
-    + **Value**. An array providing a mapping between item types and the functions that should be used for formatting them. 
+#### funcmap (optional) 
+   + **Value**. An array providing a mapping between item types and the functions that should be used for formatting them. 
         * If `funcmap` is not provided, the built-in `funcmap_default` will be used :
         ```js
         funcmap_default = {
-            DEFAULT: "getItemMetadata"
+             DEFAULT: "getItemMetadata"
         }
         ``` 
         * It calls the built-in formatting function `getItemMetadata()` for all item types. Calling this function will produce the following blocks :
-        ```md
+        ```
         Title:: <title>
         Author(s):: // comma-separated list of each item in <creators> represented as [[<firstName> <lastName>]] ; if <creatorType> is not "author", its value will be appended between parentheses after the name
         Abstract:: <abstract_note> // if Roam Markdown is used, it will be rendered
@@ -73,17 +73,17 @@ There are 3 user-defined variables that can be set ; they should be declared glo
         Date Added:: [[<dateAdded> in Roam Daily Notes Page format]]
         Tags:: // comma-separated list of each <tags> represented as #[[<tag>]] so that multi-word is handled
         ```
-    + By defining `funcmap`, the user can write their own formatting functions and call them for the desired item types. `getItemMetadata` is available to include in **funcmap** if wanted. 
+   + By defining `funcmap`, the user can write their own formatting functions and call them for the desired item types. `getItemMetadata` is available to include in **funcmap** if wanted. 
         * **Search path**. To determine which formatting function to use for an item, the extension will check the following and use the first defined value : `funcmap['itemType']` > `funcmap['DEFAULT']` > `funcmap_default['itemType']` > `funcmap_default['DEFAULT']`. 
         * **Requirements** : 
-            - 1) Custom functions must be defined by using the syntax `window.myFuncName = function(item){...}` rather than `function myFuncName(item){...}`, otherwise an error will be thrown. This is needed to make the function globally available. (Note: If anyone knows where functions defined in roam/js blocks are stored otherwise, please let me know!) 
+            1. Custom functions must be defined by using the syntax `window.myFuncName = function(item){...}` rather than `function myFuncName(item){...}`, otherwise an error will be thrown. This is needed to make the function globally available. (Note: If anyone knows where functions defined in roam/js blocks are stored otherwise, please let me know!) 
                 + _Example_ :
                 ```js
                 window.customPaperFormat = function(item){
                     // Do stuff that formats item data into blocks for import to Roam
                 }
                 ```
-            - 2) Function names must be given as strings in `funcmap`. 
+            2. Function names must be given as strings in `funcmap`. 
                 + _Example_ :
                 ```js
                 funcmap = {
@@ -92,7 +92,7 @@ There are 3 user-defined variables that can be set ; they should be declared glo
                 }
                 ```
                 The above will call `customPaperFormat()` for journal articles and conference papers, but for other item types the extension will fall back on *funcmap_default* and call the built-in `getItemMetadata()`. 
-            - 3) All formatting functions must be written as follows :
+            3. All formatting functions must be written as follows :
                 + The function must **take a single argument** : the item's array of data, as returned by the Zotero Web API. [See here](https://gist.github.com/dstillman/f1030b9609aadc51ddec) for an official gist from the Zotero API docs, showing the data returned for a single item.
                 + The function must **return a single data array** : each element of the array should correspond to a top-level Roam block to be added to the item's page. 
                     * Array elements can be of two types : _String_ or _Object_.
@@ -161,8 +161,8 @@ There are 3 user-defined variables that can be set ; they should be declared glo
                              - Top block 3
                             ```
 
-- **typemap** (optional) 
-    + **Value**. An array providing a mapping between item types and the tags that should be used to categorize them in Roam. 
+#### typemap (optional) 
+   + **Value**. An array providing a mapping between item types and the tags that should be used to categorize them in Roam. 
         * If `typemap` is not provided, the built-in `typemap_default` will be used (forked from the [melat0nin/zotero-roam-export](https://github.com/melat0nin/zotero-roam-export) plugin for Zotero) : 
         ```js
         const typemap_default = {
@@ -200,7 +200,7 @@ There are 3 user-defined variables that can be set ; they should be declared glo
         webpage: "Webpage",
         }
         ```
-    + By defining `typemap`, the user can specify custom mappings for as many or as few item types as desired. 
+   + By defining `typemap`, the user can specify custom mappings for as many or as few item types as desired. 
         * **Search path**. To determine which mapping to use for an item, the extension will by default use `typemap_default['itemType']` unless `typemap['itemType']` exists.
         * _Example_ :
         ```js
@@ -210,4 +210,4 @@ There are 3 user-defined variables that can be set ; they should be declared glo
             report: "Document"
         }
         ``` 
-    The above will format a book section's metadata with `Type:: [[Book Chapter]]`, a journal article with `Type:: [[Paper]]`, a report with `Type:: [[Document]]`, and all other item types according to the mapping from`typemap_default`.
+        The above will format a book section's metadata with `Type:: [[Book Chapter]]`, a journal article with `Type:: [[Paper]]`, a report with `Type:: [[Document]]`, and all other item types according to the mapping from`typemap_default`.
