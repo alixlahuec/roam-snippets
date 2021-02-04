@@ -371,7 +371,7 @@ async function fetchZoteroData(apiKey, dataURI, params) {
     }
 }
 
-function addBlock(uid, blockString, order) {
+function addBlock(uid, blockString, order = 0) {
     roamAlphaAPI.createBlock({ 'location': { 'parent-uid': uid, 'order': order }, 'block': { 'string': blockString } });
 }
 // Utility function to convert day of month into ordinal format for Roam date formatting
@@ -539,9 +539,7 @@ function addItemData(refSpan) {
         if (item) {
             let itemData = formatData(item);
             if (itemData.length > 0) {
-                // Items have to be added in reverse because of mandatory 'order' parameter (defaults to 0 in the function I wrote, so not explicitly set here)
-                let flippedData = itemData.reverse();
-                flippedData.forEach(function (blockString) { addBlock(uid = pageUID, blockString = blockString, order = 0) });
+                await addMetadataArray(page_uid = pageUID, arr = itemData);
             }
         }
     } catch (e) {
@@ -549,4 +547,111 @@ function addItemData(refSpan) {
     }
 }
 
+// DEV SECTION FOR NESTING SUPPORT
+// This function will be called in addItemData
+// It takes as arguments :
+// - the UID of the page to which the blocks will be added
+// - the array of formatted data that was returned for the item
+// Note: the array's length > 0 is already checked in addItemData()
+async function addMetadataArray(page_uid, arr){
+    // Go through the array items in reverse order, because each block gets added to the top so have to start with the 'last' block
+    for(k = arr.length - 1; k >= 0; k--){
+        // If the element is an Object, pass it to addBlockObject to recursively process its contents
+        if(arr[k].constructor === Object){
+            await addBlockObject(page_uid, arr[k]);
+        } else if(arr[k].constructor === String) {
+            // If the element is a simple String, add the corresponding block & move on
+            addBlock(uid = page_uid, blockString = arr[k], order = 0);
+        } else {
+            // If the element is of any other type, throw an error
+            console.log(arr[k]);
+            throw new Error('All array items should be of type String or Object');
+        }
+    }
+}
 
+async function addBlockObject(parent_uid, object) {
+    // If the Object doesn't have a string property, throw an error
+    // TODO: Add note in documentation that `string` cannot be left out
+    if(typeof(object.string) === 'undefined'){
+        console.log(object);
+        throw new Error('All blocks passed as an Object must have a string property');
+    } else {
+        // Otherwise add the block
+        addBlock(uid = parent_uid, blockString = object.string, order = 0);
+        // If the Object has a `children` property
+        if(typeof(object.children) !== 'undefined'){
+            // Wait until the block above has been added to the page
+            // This is needed because it's the only way to get the parent block's UID
+            // Technically the Roam API lets us define a block UID when creating one with createBlock(), but that has too much potential for problems right now
+            let top_uid = await waitForBlockUID(parent_uid, object.string);
+            // Once the UID of the parent block has been obtained, go through each child element 1-by-1
+            // If a child has children itself, the recursion should ensure everything gets added where it should
+            // Note: Every child of an Object block should be an Object, with a string property & (optionally) a children property
+            // TODO: Add note to documentation to that effect
+            for(j = object.children.length - 1; j >= 0; j--){
+                await addBlockObject(top_uid, object.children[j]);
+            }
+        }
+    }
+}
+
+// From James Hibbard : https://www.sitepoint.com/delay-sleep-pause-wait/
+// This is the basis for the async/await structure, which is needed to make sure processing is sequential and never parallel
+function sleep(ms){
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// This checks the contents of a UID's top-block against a string, every 100ms until it's a match
+// When a match is found, the function returns the top-block's UID
+// This is called in addBlockObject(), to obtain a parent block's UID so that its children can be added
+async function waitForBlockUID(parent_uid, string) {
+    let top_block = null;
+    let found = false;
+    let tries = 0;
+    // As long as the top-block hasn't been matched in content, keep checking it
+    try {
+        do {
+            top_block = getTopBlockData(parent_uid);
+            if (typeof (top_block.text) !== 'undefined' && top_block.text == string) {
+                // If the string content matches, end the search & return the UID
+                found = true;
+                return top_block.uid;
+            }
+            // Keep track of attempts to avoid infinite search, and wait a bit before continuing
+            tries = tries + 1;
+            await sleep(100);
+        } while (tries < 50 && !found);
+        // If after 50 attempts there still isn't a match, throw an error
+        console.log(top_block);
+        throw new error('The top block couldn\'t be matched');
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// This grabs the block UID and text of the top-child of a parent element, given the parent's UID
+// Note: The case where the parent doesn't have children isn't handled here. It shouldn't be a problem because the context in which it is called is that of looking to add grandchildren blocks, essentially
+// I.e this only gets called if the block with UID equal to parent_uid has a child that also has a child/children
+function getTopBlockData(parent_uid) {
+    // Look for the UID and string contents of the top-child of a parent
+    let top_block = window.roamAlphaAPI.q('[:find ?bUID ?bText :in $ ?pUID :where[?b :block/uid ?bUID][?b :block/string ?bText][?b :block/order 0][?p :block/children ?b][?p :block/uid ?pUID]]', parent_uid);
+    if (typeof (top_block) === 'undefined' || top_block == null || top_block.length == 0) {
+        // If there were no results or a problem with the results, return false
+        // This will keep the loop in waitForBlockUID() going
+        // Though if there's a systematic error it won't go on infinitely because waitForBlockUID() will eventually throw an error
+        return false;
+    } else {
+        // If the search returned a block's info, return it for matching
+        // If there's any problem with the values returned, make sure to catch any error
+        try {
+            let top_block_data = {
+                uid: top_block[0][0],
+                text: top_block[0][1]
+            }
+            return top_block_data;
+        } catch(e) {
+            console.error(e);
+        }
+    }
+}
