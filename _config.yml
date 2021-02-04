@@ -1,3 +1,11 @@
 remote_theme: pmarsceill/just-the-docs
 baseurl: "/"
 description: "A code repository of JavaScript extensions for Roam Research databases"
+
+aux_links:
+  "Buy me a (virtual) coffee":
+    - "https://www.buymeacoffee.com/alix"
+  "See GitHub repo":
+    - "https://github.com/greenmeen/roam-snippets"
+
+gh_edit_link: false
