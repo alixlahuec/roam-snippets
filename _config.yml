@@ -1,4 +1,3 @@
-theme: jekyll-theme-minimal
+remote_theme: pmarsceill/just-the-docs
 baseurl: "/"
-show_downloads: "true"
 description: "A code repository of JavaScript extensions for Roam Research databases"
