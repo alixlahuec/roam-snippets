@@ -530,7 +530,7 @@ function formatData(item) {
 }
 
 // refSpan is the DOM element with class "rm-page-ref" that is the target of mouse events -- but it's its parent that has the information about the citekey + the page UID
-function addItemData(refSpan) {
+async function addItemData(refSpan) {
     try {
         let citekey = refSpan.parentElement.dataset.linkTitle.replace("@", ""); // I'll deal with tags later, or not at all
         let pageUID = refSpan.parentElement.dataset.linkUid;
