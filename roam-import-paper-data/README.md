@@ -1,3 +1,6 @@
+
+ > :tada: Feb 3rd, 2021 : Nesting is now supported. See [documentation for funcmap](#funcmap-optional) for details
+
 ## roam-import-paper-data
 
 Here's a basic run-down of the extension :
