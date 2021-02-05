@@ -9,13 +9,3 @@ aux_links:
     - "https://github.com/greenmeen/roam-snippets"
 
 gh_edit_link: false
-
-collections:
-  docs:
-    permalink: "/docs/"
-    output: true
-
-just_the_docs:
-  collections:
-    docs:
-      name: Docs
