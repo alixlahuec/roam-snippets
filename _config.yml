@@ -1,2 +1,4 @@
 baseurl: "/"
 description: "A code repository of JavaScript extensions for Roam Research databases"
+
+theme: jekyll-theme-dinky
