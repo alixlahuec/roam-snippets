@@ -1,5 +1,5 @@
 
- > :tada: Feb 3rd, 2021 : Nesting is now supported. See [documentation for funcmap](#funcmap-optional) for details
+ > :tada: Feb 3rd, 2021 : Nesting is now supported. See [Using custom formatting functions](#using-custom-formatting-functions) for details
 
 ## Zotero Roam Data Importer <!-- omit in toc -->
 
