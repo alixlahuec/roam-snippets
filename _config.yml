@@ -11,13 +11,11 @@ aux_links:
 gh_edit_link: false
 
 collections:
-  zotero-data-importer:
-    permalink: "/docs/zotero-data-importer/"
+  docs:
+    permalink: "/docs/"
     output: true
 
 just_the_docs:
   collections:
-    zotero-data-importer:
-      name: Zotero Data Importer
-      nav_exclude: false
-      search_exclude: false
+    docs:
+      name: Docs
