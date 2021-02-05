@@ -9,3 +9,15 @@ aux_links:
     - "https://github.com/greenmeen/roam-snippets"
 
 gh_edit_link: false
+
+collections:
+  zotero-data-importer:
+    permalink: "/docs/zotero-data-importer/"
+    output: true
+
+just_the_docs:
+  collections:
+    zotero-data-importer:
+      name: Zotero Data Importer
+      nav_exclude: false
+      search_exclude: false
