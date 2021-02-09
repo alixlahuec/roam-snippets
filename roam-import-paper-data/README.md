@@ -107,7 +107,7 @@ By defining `funcmap`, the user can write their own formatting functions and cal
             * String elements will be added as top-level, childless blocks.
             * Object elements support nested blocks. Be careful when creating them in your formatting functions : 
                 - All Object blocks **must** have a `string` property, which is the text value for the block. This is true regardless of the item being a level-1 child, level-2 child (grandchild), etc. Otherwise, an error will be thrown. 
-                - An Object block can also have a `children` property. This should be an array of Object blocks. Items are treated recursively, so multi-level nesting is possible ; just make sure that every block in the path has a `string` property, and be careful that elements are the right type (`string` should be a String ; `children` should be an Array where each element is an Object with at least a `string` property ; and so on for every level). 
+                - An Object block can also have a `children` property. This should be an array of Object blocks. Items are treated recursively, so multi-level nesting is possible ; just make sure that every block in the path has a `string` property, and be careful that elements are the right type (`string` should be a String ; `children` should be an Array, where each element is either a String or an Object with at least a `string` property ; and so on for every level). 
                 - _Examples, with added spaces to show the indentations produced in Roam_ :
                     + This is a properly formatted output, with one level of nesting.
                     ```js

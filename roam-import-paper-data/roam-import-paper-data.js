@@ -587,10 +587,12 @@ async function addBlockObject(parent_uid, object) {
             let top_uid = await waitForBlockUID(parent_uid, object.string);
             // Once the UID of the parent block has been obtained, go through each child element 1-by-1
             // If a child has children itself, the recursion should ensure everything gets added where it should
-            // Note: Every child of an Object block should be an Object, with a string property & (optionally) a children property
-            // TODO: Add note to documentation to that effect
             for(j = object.children.length - 1; j >= 0; j--){
-                await addBlockObject(top_uid, object.children[j]);
+                if(object.children[j].constructor === Object){
+                    await addBlockObject(top_uid, object.children[j]);
+                } else if(object.children[j].constructor === String){
+                    addBlock(uid = top_uid, blockString = object.children[j], order = 0);
+                }
             }
         }
     }
