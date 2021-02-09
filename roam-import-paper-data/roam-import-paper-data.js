@@ -39,7 +39,7 @@ const typemap_default = {
     thesis: "Thesis",
     tvBroadcast: "TV broadcast",
     videoRecording: "Recording",
-    webpage: "Webpage",
+    webpage: "Webpage"
 }
 
 let ZoteroData = null;
