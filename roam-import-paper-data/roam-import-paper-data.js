@@ -14,7 +14,7 @@ const typemap_default = {
     blogPost: "Blog post",
     book: "Book",
     bookSection: "Chapter",
-    "case": "Legal case",
+    case: "Legal case",
     computerProgram: "Data",
     conferencePaper: "Conference paper",
     email: "Letter",
