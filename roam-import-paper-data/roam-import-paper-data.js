@@ -389,9 +389,8 @@ function makeOrdinal(i) {
 }
 
 // Harvesting functions
-// Each returns an array of strings, which correspond to the content of the blocks to be added
+// Each returns an array of elements of type String or Object, which correspond to the content of the blocks to be added
 // Block strings should be added in the order they're meant to be on the page
-// Default addition, FYI, is as direct children of the page ; nesting requires getting a block UID so it's harder to do right now (would require multi-step process probably)
 function getItemMetadata(item) {
     let metadata = [];
 
@@ -485,7 +484,7 @@ function getAllData(item) {
 }
 
 // From Jason Bunting on SO : https://stackoverflow.com/questions/359788/how-to-execute-a-javascript-function-when-i-have-its-name-as-a-string
-// Execute function by argument :
+// Execute function by name :
 function executeFunctionByName(functionName, context /*, args */) {
     var args = Array.prototype.slice.call(arguments, 2);
     var namespaces = functionName.split(".");
@@ -547,7 +546,8 @@ async function addItemData(refSpan) {
     }
 }
 
-// DEV SECTION FOR NESTING SUPPORT
+// SECTION FOR NESTING SUPPORT
+
 // This function will be called in addItemData
 // It takes as arguments :
 // - the UID of the page to which the blocks will be added
