@@ -17,6 +17,7 @@ const typemap_default = {
     "case": "Legal case",
     computerProgram: "Data",
     conferencePaper: "Conference paper",
+    document: "Document",
     email: "Letter",
     encyclopediaArticle: "Encyclopaedia article",
     film: "Film",
