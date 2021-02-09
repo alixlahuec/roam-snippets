@@ -592,6 +592,8 @@ async function addBlockObject(parent_uid, object) {
                     await addBlockObject(top_uid, object.children[j]);
                 } else if(object.children[j].constructor === String){
                     addBlock(uid = top_uid, blockString = object.children[j], order = 0);
+                } else {
+                    throw new Error('All children array items should be of type String or Object');
                 }
             }
         }
