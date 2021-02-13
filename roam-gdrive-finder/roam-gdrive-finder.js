@@ -62,10 +62,18 @@ function editBlock(uid, blockString){
 ///// e. Replace the gdrive button code in the text contents by the iframe code
 ///// f. Run roamAlphaAPI.updateBlock() to modify the block's contents
 
-function addIframeListener(){
-    var gdriveButtons = Array.from(document.querySelectorAll('.roam-block button')).filter(function(el){return el.innerText.startsWith("gdrive")});
+function addIframeListeners(){
+    var gdriveButtons = Array.from(document.querySelectorAll('.roam-block button')).filter(function(el){return el.innerText.startsWith("gdrive") && !el.classList.contains("gdrive-btn")});
     for(i=0;i < gdriveButtons.length; i++){
+        gdriveButtons[i].classList.add("gdrive-btn");
         gdriveButtons[i].addEventListener("click", addIframe);
+    }
+}
+
+function removeIframeListeners(){
+    var gdriveButtons = document.querySelectorAll('.gdrive-btn');
+    for(i=0; i<gdriveButtons.length;i++){
+        gdriveButtons[i].removeEventListener("click", addIframe);
     }
 }
 
@@ -174,11 +182,13 @@ function updateSigninStatus (isSignedIn) {
     if (isSignedIn) {
         authorizeButton.style.display = 'none';
         signoutButton.style.display = 'block';
-        // Insert the yet unwritten function that sets up the continuous listening for gdrive buttons
+        var checkInterval = setInterval(addIframeListeners, 1000);
     } else {
         authorizeButton.style.display = 'block';
         signoutButton.style.display = 'none';
-        // Insert the yet unwritten function that removes the event listeners & also changes the state of the application to not-listening
+        // Insert the yet unwritten function that changes the state of the application to not-listening
+        clearInterval(checkInterval);
+        removeIframeListeners();
     }
 }
 
