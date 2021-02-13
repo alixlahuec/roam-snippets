@@ -5,6 +5,7 @@ const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/r
 const SCOPES = 'https://www.googleapis.com/auth/drive';
 
 addGDriveButtons()
+handleClientLoad()
 
 var authorizeButton = document.getElementById('authorize_button');
 var signoutButton = document.getElementById('signout_button');
@@ -29,8 +30,16 @@ function addGDriveButtons(){
 // A utility function to get a block's UID from its HTML id
 function getUIDfromHTML(block){
     let blockID = block.id;
-    // The regex is ugly but using \w for alphanumeric characters didn't work
-    let blockUID = blockID.match('block-input-uuid[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}-(.+)')[1];
+    let blockUID = null;
+    if(blockID.startsWith("block-input-uuid")){
+        // The regex is ugly but using \w for alphanumeric characters didn't work
+        blockUID = blockID.match('block-input-uuid[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}-(.+)')[1];
+    } else if(blockID.includes("body-outline")){
+        blockUID = blockID.match('-body-outline-[a-z0-9]{9}-(.+)')
+    } else {
+        console.log(blockID);
+        throw new Error('Can\'t parse the block UID from the HTML id');
+    }
 
     return blockUID;
 }
@@ -93,9 +102,9 @@ async function makeIframeLink(fileObject) {
         // From https://stackoverflow.com/questions/15202163/get-shared-link-through-google-drive-api
         await gapi.client.drive.permissions.create({
             fileId: fileObject.id,
-            requestBody: {
+            resource: {
                 role: 'reader',
-                type: 'withLink'
+                type: 'anyone'
             }
         });
 
