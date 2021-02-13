@@ -33,9 +33,9 @@ function getUIDfromHTML(block){
     let blockUID = null;
     if(blockID.startsWith("block-input-uuid")){
         // The regex is ugly but using \w for alphanumeric characters didn't work
-        blockUID = blockID.match('block-input-uuid[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}-(.+)')[1];
+        blockUID = blockID.match('block-input-uuid.{8}-.{4}-.{4}-.{4}-.{12}-(.+)')[1];
     } else if(blockID.includes("body-outline")){
-        blockUID = blockID.match('-body-outline-[a-z0-9]{9}-(.+)')
+        blockUID = blockID.match('-body-outline-.{6}-.{2}-(.+)')[1];
     } else {
         console.log(blockID);
         throw new Error('Can\'t parse the block UID from the HTML id');
