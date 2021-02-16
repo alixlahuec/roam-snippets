@@ -45,10 +45,15 @@ const typemap_default = {
 
 let ZoteroData = null;
 
+let zoteroPortalDiv = null;
 let zoteroContextMenu = null;
 let zoteroContextBackdrop = null;
 let zoteroContextMenuOptions = null;
 let zoteroDataMenuVisible = false;
+let zoteroIconContextMenu = null;
+let zoteroIconContextBackdrop = null;
+let zoteroIconContextMenuOptions = null;
+let zoteroIconMenuVisible = false;
 let elementToUseForDataImport = null;
 
 if (document.getElementById('zotero-data-icon') == null) {
@@ -57,7 +62,13 @@ if (document.getElementById('zotero-data-icon') == null) {
     zoteroContextMenu = document.querySelector('.zotero-context-menu');
     zoteroContextBackdrop = document.querySelector('.zotero-context-backdrop');
     zoteroContextMenuOptions = document.querySelectorAll('.zotero-context-menu-option');
+    zoteroPortalDiv = document.getElementById("zotero-data-importer-portal");
+    createZoteroIconContextMenu();
+    zoteroIconContextMenu = document.querySelector('.zotero-icon-context-menu');
+    zoteroIconContextBackdrop = document.querySelector('.zotero-icon-context-backdrop');
+    zoteroIconContextMenuOptions = document.querySelectorAll('.zotero-icon-context-menu-option');
     setupZoteroContextMenu();
+    setupZoteroIconContextMenu();
 }
 
 // FUNCTIONS
@@ -120,6 +131,7 @@ async function zoteroDataGetter() {
                 document.addEventListener('blur', runZoteroDataGetter, true);
                 window.addEventListener('locationchange', runZoteroDataGetter, true);
                 addZoteroContextMenuListener();
+                addZoteroIconContextMenuListener();
 
                 document.getElementById('zotero-data-icon').style = "background-color: #60f06042;";
                 console.log('The results of the API request have been received ; you can check them by inspecting the value of the ZoteroData object. Data import context menu should now be available.')
@@ -138,7 +150,9 @@ async function zoteroDataGetter() {
     }
 }
 
-function checkCitekeys() {
+// Optional `update` parameter specifies whether to check items with data-zotero-bib="notFound"
+// It's set to 'false' by default (regular case), but is called with 'update=true' when updating data
+function checkCitekeys(update = false) {
     let refCitekeys = document.querySelectorAll('.ref-citekey');
     let newMatches = 0;
     let newUnmatches = 0;
@@ -146,9 +160,24 @@ function checkCitekeys() {
     if (refCitekeys.length > 0) {
         for (i = 0; i < refCitekeys.length; i++) {
             let ref = refCitekeys[i];
-            // References that have a data-zotero-bib attribute have already been checked, let's not check them again
+            // References that have a data-zotero-bib attribute have already been checked -- use param `update` to see if we should check again
             if (ref.dataset.zoteroBib) {
-                continue;
+                // If `update` is set to 'false', we don't bother checking anything & continue
+                if(update == false){
+                    continue;
+                } else {
+                    // If `update` is set to 'true', if the item was previously "notFound", check it against ZoteroData again
+                    // If the item was previously "inLibrary", we continue (it's implied by reaching the end of the if statement)
+                    if(ref.dataset.zoteroBib == "notFound"){
+                        if (ZoteroData.find(function (libItem) { return libItem.key == ref.dataset.linkTitle.replace("@", "") })) {
+                            ref.dataset.zoteroBib = "inLibrary";
+                            newMatches = newMatches + 1;
+                        } else {
+                            // Otherwise count it as unmatch
+                            newUnmatches = newUnmatches + 1;
+                        }
+                    }
+                }
             } else {
                 // For items that haven't been checked yet, look for their citekey in ZoteroData
                 if (ZoteroData.find(function (libItem) { return libItem.key == ref.dataset.linkTitle.replace("@", "") })) {
@@ -170,6 +199,7 @@ function checkCitekeys() {
 function createZoteroContextMenu() {
     var portalDiv = document.createElement("div");
     portalDiv.classList.add("bp3-portal");
+    portalDiv.id = "zotero-data-importer-portal";
     var overlayDiv = document.createElement("div");
     overlayDiv.classList.add("bp3-overlay");
     overlayDiv.classList.add("bp3-overlay-open")
@@ -219,6 +249,58 @@ function createZoteroContextMenu() {
     document.getElementById("app").appendChild(portalDiv);
 }
 
+// Create the context menu for the extension icon (> "Update data" functionality)
+function createZoteroIconContextMenu() {
+
+    var overlayDiv = document.createElement("div");
+    overlayDiv.classList.add("bp3-overlay");
+    overlayDiv.classList.add("bp3-overlay-open")
+    var backdropDiv = document.createElement("div");
+    backdropDiv.classList.add("bp3-overlay-backdrop");
+    backdropDiv.classList.add("bp3-popover-backdrop");
+    backdropDiv.classList.add("bp3-popover-appear-done");
+    backdropDiv.classList.add("bp3-popover-enter-done");
+    backdropDiv.classList.add("zotero-icon-context-backdrop");
+    backdropDiv.style.cssText = `display: none;`;
+    var containerDiv = document.createElement("div");
+    containerDiv.classList.add("bp3-transition-container");
+    containerDiv.classList.add("bp3-popover-appear-done");
+    containerDiv.classList.add("bp3-popover-enter-done");
+    containerDiv.classList.add("zotero-icon-context-menu");
+    containerDiv.style.cssText = `display: none; width: auto; position: fixed;`;
+    var popoverDiv = document.createElement("div");
+    popoverDiv.classList.add("bp3-popover");
+    popoverDiv.classList.add("bp3-minimal");
+    var popoverContentDiv = document.createElement("div");
+    popoverContentDiv.classList.add("bp3-popover-content");
+    var blankDiv = document.createElement("div");
+    var menuDiv = document.createElement("ul");
+    menuDiv.classList.add("bp3-text-small");
+    menuDiv.classList.add("bp3-menu");
+    var addDataLink = document.createElement("li");
+    addDataLink.classList.add("zotero-icon-context-menu-option");
+    var addDataLinkAction = document.createElement("a");
+    addDataLinkAction.classList.add("bp3-menu-item");
+    addDataLinkAction.classList.add("bp3-popover-dismiss");
+    var addDataLinkText = document.createElement("div");
+    addDataLinkText.classList.add("bp3-text-overflow-ellipsis");
+    addDataLinkText.classList.add("bp3-fill");
+    addDataLinkText.innerText = "Update Zotero data";
+
+    addDataLinkAction.appendChild(addDataLinkText);
+    addDataLink.appendChild(addDataLinkAction);
+    menuDiv.appendChild(addDataLink);
+    blankDiv.appendChild(menuDiv);
+    popoverContentDiv.appendChild(blankDiv);
+    popoverDiv.appendChild(popoverContentDiv);
+    containerDiv.appendChild(popoverDiv);
+    overlayDiv.appendChild(backdropDiv);
+    overlayDiv.appendChild(containerDiv);
+    
+    zoteroPortalDiv.appendChild(overlayDiv);
+
+}
+
 function removeRequestResults() {
     refCitekeys = document.querySelectorAll("ref-citekey");
     for (i = 0; i < refCitekeys.length; i++) {
@@ -227,6 +309,7 @@ function removeRequestResults() {
         // But make sure to remove the attribute to allow for a fresh check, and the context menu listener as well
         ref.removeAttribute("data-zotero-bib");
         ref.querySelector('.rm-page-ref').removeEventListener("contextmenu", addListenerToRefCitekey);
+        document.getElementById("zotero-data-icon", addListenerToZoteroIcon);
     }
 }
 
@@ -240,10 +323,28 @@ const toggleZoteroDataMenu = command => {
     }
 }
 
+// Toggle for state of context menu for the extension icon (> "Update data" functionality)
+const toggleZoteroIconMenu = command => {
+    zoteroIconContextMenu.style.display = command === "show" ? "block" : "none";
+    zoteroIconContextBackdrop.style.display = command === "show" ? "block" : "none";
+    if (command == "show") {
+        zoteroIconMenuVisible = true
+    } else {
+        zoteroIconMenuVisible = false
+    }
+}
+
 const setPositionZoteroDataMenu = ({ top, left }) => {
     zoteroContextMenu.style.left = `${left}px`;
     zoteroContextMenu.style.top = `${top}px`;
     toggleZoteroDataMenu("show");
+}
+
+// Set the position of the context menu for the extension icon (> "Update data" functionality)
+const setPositionZoteroIconMenu = ({ top, left }) => {
+    zoteroIconContextMenu.style.left = `${left}px`;
+    zoteroIconContextMenu.style.top = `${top}px`;
+    toggleZoteroIconMenu("show");
 }
 
 function addZoteroContextMenuListener() {
@@ -270,6 +371,13 @@ function addZoteroContextMenuListener() {
     }
 }
 
+// Add event listener for context menu to extension icon (> "Update data" functionality)
+function addZoteroIconContextMenuListener(){
+    document.getElementById("zotero-data-icon").addEventListener("contextmenu", addListenerToZoteroIcon);
+}
+
+// Note: both functions below are misnamed
+// TODO: give them more suitable names
 function addListenerToRefCitekey(e) {
     e.preventDefault();
     const origin = {
@@ -278,6 +386,17 @@ function addListenerToRefCitekey(e) {
     };
     setPositionZoteroDataMenu(origin);
     elementToUseForDataImport = e.target;
+    return false;
+}
+
+// Pop the context menu associated with the extension icon (> "Update data" functionality)
+function addListenerToZoteroIcon(e) {
+    e.preventDefault();
+    const origin = {
+        left: e.pageX,
+        top: e.pageY
+    };
+    setPositionZoteroIconMenu(origin);
     return false;
 }
 
@@ -292,6 +411,23 @@ function setupZoteroContextMenu() {
         zoteroContextMenuOptions[i].addEventListener("click", e => {
             if (e.target.innerHTML == "Import Zotero data to page") {
                 addItemData(elementToUseForDataImport);
+            }
+        })
+    }
+}
+
+// Set up the context menu for the extension icon (> "Update data" functionality)
+function setupZoteroIconContextMenu(){
+    window.addEventListener("click", e => {
+        if (zoteroIconMenuVisible) {
+            toggleZoteroIconMenu("hide");
+        }
+    });
+
+    for (var i = 0; i < zoteroIconContextMenuOptions.length; i++) {
+        zoteroIconContextMenuOptions[i].addEventListener("click", e => {
+            if (e.target.innerHTML == "Update Zotero data") {
+                updateZoteroData(USER_REQUEST.apikey, USER_REQUEST.dataURI, USER_REQUEST.params);
             }
         })
     }
@@ -701,4 +837,47 @@ function getTopBlockData(parent_uid) {
             console.error(e);
         }
     }
+}
+
+// DEV
+// SECTION FOR "UPDATE DATA" SUPPORT
+
+async function updateZoteroData(apiKey, dataURI, params) {
+    // Turn the icon background to orange while we're updating the data
+    document.getElementById('zotero-data-icon').style = "background-color: #fd9d0d63;";
+
+    // Get latest version of any item in ZoteroData
+    let latestVersion = ZoteroData[0].version;
+    for (i = 1; i < ZoteroData.length; i++) {
+        latestVersion = (ZoteroData[i].version > latestVersion) ? ZoteroData[i].version : latestVersion;
+    }
+    // Construct the update request with a 'since' param
+    // It makes sure that, if any results are returned, it'll be only the new ones
+    // Originally I wanted to use the 'If-Modified-Since-Version' header that Zotero provides but it never returned a 304 during testing
+    let paramsQuery = new URLSearchParams(params);
+    paramsQuery.set('since', latestVersion);
+    let updateRequest = await fetchZoteroData(apiKey, dataURI, paramsQuery.toString());
+
+    // How many items were returned ?
+    let extraResults = updateRequest.data.length;
+    // If there were no additional results
+    if(extraResults == 0){
+        // Tell the user nothing changed
+        alert("No new items were found since the data was last loaded");
+        // Turn the icon background to green again
+        document.getElementById('zotero-data-icon').style = "background-color: #60f06042;";
+    } else {
+        // If there were additional results :
+        let newItems = updateRequest.data;
+        let nbNewItems = newItems.length;
+        // Add the items to the ZoteroData object
+        ZoteroData.push(...newItems);
+        // Tell the user there were X additional results
+        alert(nbNewItems + " new items were found. They've been added to the dataset, and citekeys have been checked against the new data.");
+        // Check the ref citekeys on the page, *including* those that were previously "notFound"
+        checkCitekeys(update = true);
+        // Turn the icon background to green again
+        document.getElementById('zotero-data-icon').style = "background-color: #60f06042;";
+    }
+
 }
