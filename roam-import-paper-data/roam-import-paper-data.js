@@ -868,10 +868,26 @@ async function updateZoteroData(apiKey, dataURI, params) {
         // If there were additional results :
         let newItems = updateRequest.data;
         let nbNewItems = newItems.length;
-        // Add the items to the ZoteroData object
-        ZoteroData.push(...newItems);
+        let nbModifiedItems = 0;
+
+        // Process the new items for citekeys ; then, check against ZoteroData to find *modified* items & remove their old copy
+        // Look for citekeys among the new items ; if found, assign it to the item's top-level `key` property
+        newItems.forEach(function (item, index, array) { if(typeof(item.data.extra) !== 'undefined'){if (item.data.extra.includes('Citation Key: ')) { array[index].key = item.data.extra.match('Citation Key: (.+)')[1] }} });
+        for(i=0; i < newItems.length; i++){
+            let duplicateIndex = ZoteroData.findIndex(function (libItem) { return libItem.key == newItems[i].key });
+            // If there is no element in ZoteroData with the item's key, add the item to the dataset
+            if(duplicateIndex == -1){
+                ZoteroData.push(newItems[i]);
+            } else {
+                // If there is already an element of ZoteroData sharing the same key as the item, replace that element with the item (aka, update the data)
+                ZoteroData[duplicateIndex] = newItems[i];
+                // Update the counters that will be displayed to the user
+                nbModifiedItems += 1;
+                nbNewItems -= 1;
+            }
+        }
         // Tell the user there were X additional results
-        alert(nbNewItems + " new items were found. They've been added to the dataset, and citekeys have been checked against the new data.");
+        alert(nbNewItems + " new items and " + nbModifiedItems + " modified items were found. The dataset has been updated, and citekeys have been checked against the new data.");
         // Check the ref citekeys on the page, *including* those that were previously "notFound"
         checkCitekeys(update = true);
         // Turn the icon background to green again
