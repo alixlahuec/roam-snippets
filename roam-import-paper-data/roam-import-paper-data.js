@@ -341,9 +341,13 @@ const setPositionZoteroDataMenu = ({ top, left }) => {
 }
 
 // Set the position of the context menu for the extension icon (> "Update data" functionality)
-const setPositionZoteroIconMenu = ({ top, right }) => {
-    zoteroIconContextMenu.style.right = `${right}px`;
-    zoteroIconContextMenu.style.top = `${top}px`;
+const setPositionZoteroIconMenu = ({ top, left }) => {
+    if(left >= 0.9*window.innerWidth){
+        zoteroIconContextMenu.style.left = `calc(${left}px - 7%)`;
+    } else {
+        zoteroIconContextMenu.style.left = `${left}px`;
+    }
+    zoteroIconContextMenu.style.top = `calc(${top}px + 3%)`;
     toggleZoteroIconMenu("show");
 }
 
@@ -393,7 +397,7 @@ function addListenerToRefCitekey(e) {
 function addListenerToZoteroIcon(e) {
     e.preventDefault();
     const origin = {
-        right: e.pageX,
+        left: e.pageX,
         top: e.pageY
     };
     setPositionZoteroIconMenu(origin);
