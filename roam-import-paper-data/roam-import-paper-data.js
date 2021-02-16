@@ -455,12 +455,8 @@ function zoteroDataButton() {
 
 async function requestZoteroData(requestObject) {
     ZoteroData = null;
-    try{
-        ZoteroData = await fetchZoteroData(requestObject.apikey, requestObject.dataURI, requestObject.params);
-    } catch(e){
-        console.error(e);
-    }
-    // TODO: Add handling of non-200 response codes from the API
+    ZoteroData = await fetchZoteroData(requestObject.apikey, requestObject.dataURI, requestObject.params);
+    
     if(typeof(ZoteroData) !== 'undefined' && ZoteroData != null){
         // Traverse array of items and for those that have a pinned citekey, change the value of ITEM.key to the citekey instead of the Zotero item key
         // Note : the Zotero item key will still be available in ITEM.data.key
@@ -478,8 +474,10 @@ async function requestZoteroData(requestObject) {
 
 // Originally from Stack Overflow : https://stackoverflow.com/questions/45018338/javascript-fetch-api-how-to-save-output-to-variable-as-an-object-not-the-prom/45018619 
 // Feb 15th : implemented parallel API requests for better performance on large datasets
+// TODO: Add handling of non-200 response codes from the API
 async function fetchZoteroData(apiKey, dataURI, params){
     let requestURL = "https://api.zotero.org/" + dataURI + "?" + params;
+    let results = null;
 
     // Make initial call to API, to know total number of results
     try{
@@ -505,7 +503,7 @@ async function fetchZoteroData(apiKey, dataURI, params){
             limitResults = Number(paramsQuery.get('limit'));
         }
 
-        let results = await response.json();
+        results = await response.json();
 
         // Determine if additional API calls are needed
         let resultsTraversed = startIndex + results.length;
@@ -534,12 +532,12 @@ async function fetchZoteroData(apiKey, dataURI, params){
             processedResults = processedResults.flat(1);
             results.push(...processedResults);
         }
-
+    } catch(e) {
+        console.error(e);
+    } finally {
         return{
             data: results
         }
-    } catch(e) {
-        console.error(e);
     }
 }
 
