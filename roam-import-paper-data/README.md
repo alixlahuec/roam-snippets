@@ -1,5 +1,6 @@
 
- > Feb 15th, 2021 : API calls are now made in parallel instead of sequentially, for much improved performance on large datasets.
+ > Feb 15th, 2021 : API calls are now made in parallel instead of sequentially, for much improved performance on large datasets. 
+ 
  > :tada: Feb 3rd, 2021 : Nesting is now supported. See [Using custom formatting functions](#using-custom-formatting-functions) for details
 
 ## Zotero Roam Data Importer <!-- omit in toc -->
