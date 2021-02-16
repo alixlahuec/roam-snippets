@@ -340,10 +340,13 @@ async function requestZoteroData(requestObject) {
     }
 }
 
-// From Stack Overflow : https://stackoverflow.com/questions/45018338/javascript-fetch-api-how-to-save-output-to-variable-as-an-object-not-the-prom/45018619 
-async function fetchZoteroData(apiKey, dataURI, params) {
+// Originally from Stack Overflow : https://stackoverflow.com/questions/45018338/javascript-fetch-api-how-to-save-output-to-variable-as-an-object-not-the-prom/45018619 
+// Feb 15th : implemented parallel API requests for better performance on large datasets
+async function fetchZoteroData(apiKey, dataURI, params){
     let requestURL = "https://api.zotero.org/" + dataURI + "?" + params;
-    try {
+
+    // Make initial call to API, to know total number of results
+    try{
         let response = await fetch(requestURL, {
             method: 'GET',
             headers: {
@@ -351,24 +354,56 @@ async function fetchZoteroData(apiKey, dataURI, params) {
                 'Zotero-API-Key': apiKey
             }
         });
+        // Assess total results
         let totalResults = response.headers.get('Total-Results');
-        let results = await response.json();
-        let startIndex = 0;
+        // Find query params
         let paramsQuery = new URLSearchParams(params);
-        if (paramsQuery.has('start')) {
+        // Start index
+        let startIndex = 0;
+        if(paramsQuery.has('start')){
             startIndex = Number(paramsQuery.get('start'));
         }
-        let resultsTraversed = startIndex + results.length;
-        if (resultsTraversed < totalResults) {
-            paramsQuery.set('start', startIndex + results.length)
-            let additionalBatch = await fetchZoteroData(apiKey, dataURI, params = paramsQuery.toString());
-            results.push(...additionalBatch.data);
+        // Limit param
+        let limitResults = 100;
+        if(paramsQuery.has('limit')){
+            limitResults = Number(paramsQuery.get('limit'));
         }
-        return {
+
+        let results = await response.json();
+
+        // Determine if additional API calls are needed
+        let resultsTraversed = startIndex + results.length;
+        if(resultsTraversed < totalResults){
+            // If there are more results to traverse, calculate how many more calls are needed
+            let extraCalls = Math.ceil((totalResults - resultsTraversed)/limitResults);
+            let apiCalls = [];
+            for(i=1; i <= extraCalls; i++){
+                // Set up the request parameters
+                let newStartIndex = resultsTraversed + limitResults*(i - 1);
+                paramsQuery.set('start', newStartIndex);
+                paramsQuery.set('limit', limitResults);
+                let newRequestURL = "https://api.zotero.org/" + dataURI + "?" + paramsQuery.toString();
+                // Add the promise to the array of API calls
+                apiCalls.push(fetch(newRequestURL, {
+                    method: 'GET',
+                    headers: {
+                        'Zotero-API-Version': 3,
+                        'Zotero-API-Key': apiKey
+                    }
+                }));
+            }
+            // Gather the array of promise results, convert them to JSON, flatten the output, then add to the results from initial API call
+            let additionalResults = await Promise.all(apiCalls);
+            let processedResults = await Promise.all(additionalResults.map(function(data){ return data.json(); }));
+            processedResults = processedResults.flat(1);
+            results.push(...processedResults);
+        }
+
+        return{
             data: results
-        };
-    } catch (error) {
-        console.error(error);
+        }
+    } catch(e) {
+        console.error(e);
     }
 }
 
