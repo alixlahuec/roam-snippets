@@ -1053,7 +1053,8 @@ function createZoteroSearchOverlay(){
     searchBar.id = "zotero-search-autocomplete";
     searchBar.tabIndex = "1";
     searchBar.type = "text";
-    searchBar.class = "bp3-input bp3-fill";
+    searchBar.classList.add("bp3-input");
+    searchBar.classList.add("bp3-fill");
     searchDialogBody.appendChild(searchBar);
 
     // Add footer elements
