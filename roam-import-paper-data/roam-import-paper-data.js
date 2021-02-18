@@ -82,8 +82,11 @@ var zoteroSearchConfig = {
     highlight: true,
     maxResults: 20,
     resultsList: {
-        className: "bp3-menu",
-        idName: "zotero-search-results-list"
+        className: "zotero-search-results-list",
+        idName: "zotero-search-results-list",
+        container: source => {
+            source.setAttribute("class", "bp3-menu")
+        }
     },
     resultItem: {
         element: 'li',
