@@ -145,7 +145,7 @@ if (document.getElementById('zotero-data-icon') == null) {
 
     // Section for search functionality support
     createZoteroSearchOverlay();
-    zoteroSearchInput.document.getElementById("zotero-search-autocomplete");
+    zoteroSearchInput = document.getElementById("zotero-search-autocomplete");
     zoteroSearchOverlay = document.querySelector(".zotero-search-overlay");
     zoteroSearchCloseButton = document.querySelector("button.zotero-search-close");
     zoteroUpdateButton = document.querySelector("button.zotero-update-data");
