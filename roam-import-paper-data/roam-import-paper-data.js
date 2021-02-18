@@ -67,7 +67,13 @@ let zoteroSearchVisible = false;
 // The configuration of the autoComplete object
 var zoteroSearchConfig = {
     data: {
-        src: simplifyDataArray(ZoteroData),
+        src: function(){
+            if(ZoteroData == null){
+                return [];
+            } else {
+                return simplifyDataArray(ZoteroData);
+            }
+        },
         key: ['title', 'authors'],
         cache: false
     },
