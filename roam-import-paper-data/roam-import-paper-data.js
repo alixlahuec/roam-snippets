@@ -67,7 +67,7 @@ let zoteroSearchVisible = false;
 // The configuration of the autoComplete object
 var zoteroSearchConfig = {
     data: {
-        src: function(){
+        src: async function() {
             if(ZoteroData == null){
                 return [];
             } else {
@@ -146,6 +146,7 @@ if (document.getElementById('zotero-data-icon') == null) {
     zoteroUpdateButton = document.querySelector("button.zotero-update-data");
 
     setupZoteroUpdateButton();
+    setupZoteroSearchClose();
 }
 
 // FUNCTIONS
@@ -1027,7 +1028,7 @@ function createZoteroSearchOverlay(){
 
     let searchDialogDiv = document.createElement("div");
     searchDialogDiv.classList.add("bp3-dialog");
-    searchDialogDiv.style = "width:50%;";
+    searchDialogDiv.style = "width:60%;";
 
     let searchDialogHeader = document.createElement("div");
     searchDialogHeader.classList.add("bp3-dialog-header");
