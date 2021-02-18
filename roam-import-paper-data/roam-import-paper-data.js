@@ -138,7 +138,7 @@ if (document.getElementById('zotero-data-icon') == null) {
     zoteroSearchOverlay = document.querySelector(".zotero-search-overlay");
     zoteroSearchCloseButton = document.querySelector("button.zotero-search-close");
     zoteroUpdateButton = document.querySelector("button.zotero-update-data");
-    setupZoteroSearchOverlay();
+
     setupZoteroUpdateButton();
 }
 
@@ -215,7 +215,6 @@ async function zoteroDataGetter() {
         document.getElementById('zotero-data-icon').setAttribute("status", "off");
         ZoteroData = null;
         zoteroSearch.unInit();
-        zoteroSearch = null;
         removeRequestResults();
         document.removeEventListener('blur', runZoteroDataGetter, true);
         window.removeEventListener('locationchange', runZoteroDataGetter, true);
