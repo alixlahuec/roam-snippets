@@ -59,6 +59,7 @@ let elementToUseForDataImport = null;
 // Section for search functionality support
 
 let zoteroSearch = null;
+let zoteroSearchInput = null;
 let zoteroSearchOverlay = null;
 let zoteroSearchCloseButton = null;
 let zoteroUpdateButton = null;
@@ -144,6 +145,7 @@ if (document.getElementById('zotero-data-icon') == null) {
 
     // Section for search functionality support
     createZoteroSearchOverlay();
+    zoteroSearchInput.document.getElementById("zotero-search-autocomplete");
     zoteroSearchOverlay = document.querySelector(".zotero-search-overlay");
     zoteroSearchCloseButton = document.querySelector("button.zotero-search-close");
     zoteroUpdateButton = document.querySelector("button.zotero-update-data");
@@ -1097,9 +1099,10 @@ function setupZoteroSearchOverlay(){
 const toggleZoteroSearchOverlay = command => {
     zoteroSearchOverlay.style.display = command === "show" ? "block" : "none";
     if (command == "show") {
-        document.getElementById("zotero-search-autocomplete").focus();
+        zoteroSearchInput.focus();
         zoteroSearchVisible = true
     } else {
+        zoteroSearchInput.value = "";
         zoteroSearchVisible = false
     }
 }
