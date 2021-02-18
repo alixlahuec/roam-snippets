@@ -1097,6 +1097,7 @@ function setupZoteroSearchOverlay(){
 const toggleZoteroSearchOverlay = command => {
     zoteroSearchOverlay.style.display = command === "show" ? "block" : "none";
     if (command == "show") {
+        document.getElementById("zotero-search-autocomplete").focus();
         zoteroSearchVisible = true
     } else {
         zoteroSearchVisible = false
