@@ -85,7 +85,7 @@ var zoteroSearchConfig = {
         className: "zotero-search-results-list",
         idName: "zotero-search-results-list",
         container: source => {
-            source.setAttribute("class", "bp3-menu")
+            source.classList.add("bp3-menu")
         }
     },
     resultItem: {
