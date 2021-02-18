@@ -56,6 +56,69 @@ let zoteroIconContextMenuOptions = null;
 let zoteroIconMenuVisible = false;
 let elementToUseForDataImport = null;
 
+// Section for search functionality support
+
+let zoteroSearch = null;
+let zoteroSearchOverlay = null;
+let zoteroSearchCloseButton = null;
+let zoteroUpdateButton = null;
+let zoteroSearchVisible = false;
+
+// The configuration of the autoComplete object
+var zoteroSearchConfig = {
+    data: {
+        src: simplifyDataArray(ZoteroData),
+        key: ['title', 'authors'],
+        cache: false
+    },
+    selector: '#zotero-search-autocomplete',
+    searchEngine: 'strict',
+    highlight: true,
+    maxResults: 20,
+    resultsList: {
+        className: "bp3-menu",
+        idName: "zotero-search-results-list"
+    },
+    resultItem: {
+        element: 'li',
+        className: "zotero-search_result",
+        idName: "zotero-search_result",
+		content: (data, element) => {
+            if(data.key == "title"){
+                element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
+                                    <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
+                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;">${data.match}</span>
+                                    <p class="zotero-search-item-metadata">${data.value.authors}</p>
+                                    </div>
+                                    <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
+                                    </a>`;
+            } else if(data.key == "authors"){
+                element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
+                                    <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
+                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;">${data.value.title}</span>
+                                    <p class="zotero=search-item-metadata">${data.match}</p>
+                                    </div>
+                                    <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
+                                    </a>`;
+            }
+		}
+	},
+    noResults: (dataFeedback, generateList) => {
+        // Generate autoComplete List
+        generateList(zoteroSearch, dataFeedback, dataFeedback.results);
+        // No Results List Item
+        const result = document.createElement("li");
+        result.setAttribute("class", "no_result");
+        result.setAttribute("tabindex", "1");
+        result.innerHTML = `<span style="display: flex; align-items: center; font-weight: 100; color: rgba(0,0,0,.2);">Found No Results for "${dataFeedback.query}"</span>`;
+        document
+            .querySelector(`#${zoteroSearch.resultsList.idName}`)
+            .appendChild(result);
+    }    
+};
+
+// Initial extension setup, when graph is re/loaded
+
 if (document.getElementById('zotero-data-icon') == null) {
     zoteroDataButton();
     createZoteroContextMenu();
@@ -69,6 +132,14 @@ if (document.getElementById('zotero-data-icon') == null) {
     zoteroIconContextMenuOptions = document.querySelectorAll('.zotero-icon-context-menu-option');
     setupZoteroContextMenu();
     setupZoteroIconContextMenu();
+
+    // Section for search functionality support
+    createZoteroSearchOverlay();
+    zoteroSearchOverlay = document.querySelector(".zotero-search-overlay");
+    zoteroSearchCloseButton = document.querySelector("button.zotero-search-close");
+    zoteroUpdateButton = document.querySelector("button.zotero-update-data");
+    setupZoteroSearchOverlay();
+    setupZoteroUpdateButton();
 }
 
 // FUNCTIONS
@@ -134,13 +205,17 @@ async function zoteroDataGetter() {
                 addZoteroIconContextMenuListener();
 
                 document.getElementById('zotero-data-icon').style = "background-color: #60f06042;";
-                console.log('The results of the API request have been received ; you can check them by inspecting the value of the ZoteroData object. Data import context menu should now be available.')
+                console.log('The results of the API request have been received ; you can check them by inspecting the value of the ZoteroData object. Data import context menu should now be available.');
+
+                setupZoteroSearchOverlay();
             }
         }
     } else {
         // Behavior if the button is being turned OFF
         document.getElementById('zotero-data-icon').setAttribute("status", "off");
         ZoteroData = null;
+        zoteroSearch.unInit();
+        zoteroSearch = null;
         removeRequestResults();
         document.removeEventListener('blur', runZoteroDataGetter, true);
         window.removeEventListener('locationchange', runZoteroDataGetter, true);
@@ -277,6 +352,7 @@ function createZoteroIconContextMenu() {
     var menuDiv = document.createElement("ul");
     menuDiv.classList.add("bp3-text-small");
     menuDiv.classList.add("bp3-menu");
+
     var addDataLink = document.createElement("li");
     addDataLink.classList.add("zotero-icon-context-menu-option");
     var addDataLinkAction = document.createElement("a");
@@ -287,9 +363,25 @@ function createZoteroIconContextMenu() {
     addDataLinkText.classList.add("bp3-fill");
     addDataLinkText.innerText = "Update Zotero data";
 
+    var searchDataLink = document.createElement("li");
+    searchDataLink.classList.add("zotero-icon-context-menu-option");
+    var searchDataLinkAction = document.createElement("a");
+    searchDataLinkAction.classList.add("bp3-menu-item");
+    searchDataLinkAction.classList.add("bp3-popover-dismiss");
+    var searchDataLinkText = document.createElement("div");
+    searchDataLinkText.classList.add("bp3-text-overflow-ellipsis");
+    searchDataLinkText.classList.add("bp3-fill");
+    searchDataLinkText.innerText = "Search in dataset...";
+
     addDataLinkAction.appendChild(addDataLinkText);
     addDataLink.appendChild(addDataLinkAction);
+
+    searchDataLinkAction.appendChild(searchDataLinkText);
+    searchDataLink.appendChild(searchDataLinkAction);
+
     menuDiv.appendChild(addDataLink);
+    menuDiv.appendChild(searchDataLink);
+
     blankDiv.appendChild(menuDiv);
     popoverContentDiv.appendChild(blankDiv);
     popoverDiv.appendChild(popoverContentDiv);
@@ -432,6 +524,8 @@ function setupZoteroIconContextMenu(){
         zoteroIconContextMenuOptions[i].addEventListener("click", e => {
             if (e.target.innerHTML == "Update Zotero data") {
                 updateZoteroData(USER_REQUEST.apikey, USER_REQUEST.dataURI, USER_REQUEST.params);
+            } else if(e.target.innerHTML == "Search in dataset...") {
+                toggleZoteroSearchOverlay("show");
             }
         })
     }
@@ -841,7 +935,7 @@ function getTopBlockData(parent_uid) {
     }
 }
 
-// DEV
+// DEV ---------------------------------------------------------
 // SECTION FOR "UPDATE DATA" SUPPORT
 
 async function updateZoteroData(apiKey, dataURI, params) {
@@ -898,4 +992,148 @@ async function updateZoteroData(apiKey, dataURI, params) {
         document.getElementById('zotero-data-icon').style = "background-color: #60f06042;";
     }
 
+}
+
+// SECTION FOR "SEARCH ITEMS" SUPPORT
+
+// Create the overlay + its components, then add to extension portal in DOM
+function createZoteroSearchOverlay(){
+
+    let searchOverlay = document.createElement("div");
+    searchOverlay.classList.add("bp3-overlay");
+    searchOverlay.classList.add("bp3-overlay-open");
+    searchOverlay.classList.add("bp3-overlay-scroll-container");
+    searchOverlay.classList.add("zotero-search-overlay");
+    searchOverlay.style = "display:none;"
+
+    let searchOverlayBackdrop = document.createElement("div");
+    searchOverlayBackdrop.classList.add("bp3-overlay-backdrop");
+    searchOverlayBackdrop.classList.add("bp3-overlay-appear-done");
+    searchOverlayBackdrop.classList.add("bp3-overlay-enter-done");
+    searchOverlayBackdrop.classList.add("zotero-search-backdrop");
+    searchOverlayBackdrop.tabIndex = "0";
+
+    let searchDialogContainer = document.createElement("div");
+    searchDialogContainer.classList.add("bp3-dialog-container");
+    searchDialogContainer.classList.add("bp3-overlay-content");
+    searchDialogContainer.classList.add("bp3-overlay-appear-done");
+    searchDialogContainer.classList.add("bp3-overlay-enter-done");
+    searchDialogContainer.tabIndex = "0";
+
+    let searchDialogDiv = document.createElement("div");
+    searchDialogDiv.classList.add("bp3-dialog");
+    searchDialogDiv.style = "width:50%;";
+
+    let searchDialogHeader = document.createElement("div");
+    searchDialogHeader.classList.add("bp3-dialog-header");
+    
+    let searchDialogBody = document.createElement("div");
+    searchDialogBody.classList.add("bp3-dialog-body");
+
+    let searchDialogFooter = document.createElement("div");
+    searchDialogFooter.classList.add("bp3-dialog-footer");
+
+    // Add header elements
+    searchDialogHeader.innerHTML = `<h4 class="bp3-heading">Zotero Search</h4>
+                                    <button type="button" aria-label="Close" class="zotero-search-close bp3-button bp3-minimal bp3-dialog-close-button">
+                                    <span icon="small-cross" class="bp3-icon bp3-icon-small-cross"><svg data-icon="small-cross" width="20" height="20" viewBox="0 0 20 20"><desc>small-cross</desc><path d="M11.41 10l3.29-3.29c.19-.18.3-.43.3-.71a1.003 1.003 0 00-1.71-.71L10 8.59l-3.29-3.3a1.003 1.003 0 00-1.42 1.42L8.59 10 5.3 13.29c-.19.18-.3.43-.3.71a1.003 1.003 0 001.71.71l3.29-3.3 3.29 3.29c.18.19.43.3.71.3a1.003 1.003 0 00.71-1.71L11.41 10z" fill-rule="evenodd"></path></svg></span></button>`
+
+    // Add body elements
+    let parText = document.createElement("p");
+    parText.innerHTML = `<strong>Enter text below to look for items* in your loaded Zotero dataset.</strong>
+                    <br>(* only the title, year and first author fields will be searched. A more fully-featured search is coming soon - please use the <a href="http://example.com">feedback form</a> to let me know what you'd like to have.)`
+    searchDialogBody.appendChild(parText);
+
+    let searchBar = document.createElement('input');
+    searchBar.id = "zotero-search-autocomplete";
+    searchBar.tabIndex = "1";
+    searchBar.type = "text";
+    searchBar.class = "bp3-input bp3-fill";
+    searchDialogBody.appendChild(searchBar);
+
+    // Add footer elements
+    searchDialogFooter.innerHTML = `<div class="bp3-dialog-footer-actions">
+                                    <span class="bp3-popover2-target" tabindex="0">
+                                    <button type="button" class="zotero-update-data bp3-button">
+                                    <span class="bp3-button-text">Update Zotero data</span>
+                                    </button></span></div>`
+
+    // Chain up all the DOM elements
+
+    searchDialogDiv.appendChild(searchDialogHeader);
+    searchDialogDiv.appendChild(searchDialogBody);
+    searchDialogDiv.appendChild(searchDialogFooter);
+
+    searchDialogContainer.appendChild(searchDialogDiv);
+
+    searchOverlay.appendChild(searchOverlayBackdrop);
+    searchOverlay.appendChild(searchDialogContainer);
+
+    document.getElementById("zotero-data-importer-portal").appendChild(searchOverlay);
+
+}
+// Setup listeners
+
+// Handles initialization of the zoteroSearch autoComplete object
+function setupZoteroSearchOverlay(){
+    if(zoteroSearch == null){
+        zoteroSearch = new autoComplete(zoteroSearchConfig);
+    } else {
+        zoteroSearch.init();
+    }
+}
+
+// Toggles the display of the search overlay
+const toggleZoteroSearchOverlay = command => {
+    zoteroSearchOverlay.style.display = command === "show" ? "block" : "none";
+    if (command == "show") {
+        zoteroSearchVisible = true
+    } else {
+        zoteroSearchVisible = false
+    }
+}
+
+// Add listener to the 'Update data' button in the search overlay
+function setupZoteroUpdateButton(){
+    zoteroUpdateButton.addEventListener("click", function() {
+        if(ZoteroData !== null){
+            updateZoteroData(USER_REQUEST.apikey, USER_REQUEST.dataURI, USER_REQUEST.params);
+        }
+    })
+}
+
+// Add listeners to close the search overlay
+function setupZoteroSearchClose(){
+    // Add listener to the close button
+    zoteroSearchCloseButton.addEventListener("click", function(){
+        toggleZoteroSearchOverlay("hide");
+    })
+    // Add listener for Esc keypress
+    window.addEventListener("keydown", (e) => {
+        if(e.key === "Escape" && zoteroSearchVisible){
+            toggleZoteroSearchOverlay("hide");
+        }
+    })
+}
+
+// Function to process ZoteroData into a simplified, more usable data array for the autoComplete
+function simplifyDataArray(arr){
+    // Filter out attachments & notes
+    let itemsArray = arr.filter(function(el){ return el.data.itemType != "attachment" && el.data.itemType != "note" });
+    // Simplify data structure
+    itemsArray.forEach(function(item, index, array){
+        let titleString = (item.data.title) ? item.data.title : "";
+        if(item.meta.parsedDate){
+            let itemDate = new Date(item.meta.parsedDate);
+            itemDate = itemDate.getUTCFullYear().toString();
+            titleString = titleString + " (" + itemDate + ")";
+        }
+        array[index] = {
+            key: item.key,
+            title: titleString,
+            authors: (item.meta.creatorSummary) ? item.meta.creatorSummary : ""
+        }
+    })
+
+    return itemsArray;
 }
