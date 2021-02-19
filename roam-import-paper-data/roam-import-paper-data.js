@@ -137,7 +137,30 @@ var zoteroSearchConfig = {
         document
             .querySelector(`#${zoteroSearch.resultsList.idName}`)
             .appendChild(result);
-    }    
+    },
+    onSelection: (feedback) => {
+        let citekey = "@" + feedback.selection.value.key;
+        let pageInGraph = lookForPage(citekey);
+        let iconName = (pageInGraph.present == true) ? "tick" : "cross";
+        let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
+        let itemInfo = (pageInGraph.present == true) ? "Page already exists in the graph" : "Page not found in the graph";
+        let pageUID = (pageInGraph.uid) ? pageInGraph.uid : "";
+        
+        let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
+        metadataDiv.innerHTML = `<ul>
+                                <li>Item key : ${feedback.selection.value.key}</li>
+                                <li>Title : ${feedback.selection.value.title}</li>
+                                <li>Author(s) : ${feedback.selection.value.authors}</li>
+                                </ul>`;
+
+        let graphInfoDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-graph-info");
+        graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-minimal bp3-intent-${iconIntent}"></span>
+                                <span>${itemInfo}</span></div>
+                                <div>
+                                <span class="bp3-icon-add bp3-minimal"></span>
+                                <a class="zotero-search-import-item" onclick="addSearchResult(${citekey},${pageUID})">Import data to Roam</a>
+                                </div>`
+    }
 };
 
 // Initial extension setup, when graph is re/loaded
@@ -1076,6 +1099,19 @@ function createZoteroSearchOverlay(){
     searchBar.classList.add("bp3-fill");
     searchDialogBody.appendChild(searchBar);
 
+    let selectedItemDiv = document.createElement('div');
+    selectedItemDiv.id = "zotero-search-selected-item";
+
+    let selectedItemMetadata = document.createElement('div');
+    selectedItemMetadata.classList.add("zotero-search-selected-item-metadata");
+    let selectedItemGraphInfo = document.createElement('div');
+    selectedItemGraphInfo.classList.add("zotero-search-selected-item-graph-info");
+
+    selectedItemDiv.appendChild(selectedItemMetadata);
+    selectedItemDiv.appendChild(selectedItemGraphInfo);
+
+    searchDialogBody.appendChild(selectedItemDiv);
+
     // Add footer elements
     searchDialogFooter.innerHTML = `<div class="bp3-dialog-footer-actions">
                                     <span class="bp3-popover2-target" tabindex="0">
@@ -1193,4 +1229,68 @@ function simplifyDataArray(arr){
     })
 
     return itemsArray;
+}
+
+// Function to look up a page in the graph based on its title
+function lookForPage(title){
+    let pageInfo = null;
+    let pageSearch = roamAlphaAPI.q('[:find ?uid :in $ ?title :where[?p :block/uid ?uid][?p :node/title ?title]]', title);
+    
+    if(pageSearch.length > 0){
+        pageInfo = {
+            present: true,
+            uid: pageSearch[0][0]
+        }
+    } else{
+        pageInfo = {
+            present: false
+        }
+    }
+    
+    return pageInfo;
+}
+
+async function addSearchResult(title, uid){
+    let citekey = title.replace("@", "");
+    let item = ZoteroData.find(function (i) { return i.key == citekey });
+    let itemData = formatData(item);
+
+    if(item && itemData.length > 0){
+        if(uid) {
+            await addMetadataArray(page_uid = uid, arr = itemData);
+        } else {
+            roamAlphaAPI.createPage(title);
+            let pageUID = await waitForPageUID(title);
+            await addMetadataArray(page_uid = pageUID, arr = itemData);
+        }
+    } else {
+        alert("Something went wrong when attempting to format the item's data.");
+        console.log(item);
+        console.log(itemData);
+    }
+}
+
+// Get the UID of a newly-created page
+async function waitForPageUID(page_title) {
+    let pageUID = null;
+    let found = false;
+    let tries = 0;
+    // As long as the page hasn't been found, keep checking it
+    try {
+        do {
+            pageUID = roamAlphaAPI.q("[:find ?uid :in $ ?title :where[?p :node/title ?title][?p :block/uid ?uid]]", page_title);
+            if(pageUID.length > 0){
+                found = true;
+                return pageUID[0][0];
+            }
+            // Keep track of attempts to avoid infinite search, and wait a bit before continuing
+            tries = tries + 1;
+            await sleep(75);
+        } while (tries < 50 && !found);
+        // If after 50 attempts there still isn't a match, throw an error
+        console.log(pageUID);
+        throw new error('The page couldn\'t be found');
+    } catch (e) {
+        console.error(e);
+    }
 }
