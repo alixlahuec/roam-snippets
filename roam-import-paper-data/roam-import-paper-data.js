@@ -75,7 +75,7 @@ var zoteroSearchConfig = {
                 return simplifyDataArray(ZoteroData);
             }
         },
-        key: ['title', 'authors'],
+        key: ['title', 'authors', 'year'],
         cache: false
     },
     selector: '#zotero-search-autocomplete',
@@ -102,16 +102,16 @@ var zoteroSearchConfig = {
             if(data.key == "title"){
                 element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
                                     <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
-                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;">${data.match}</span>
-                                    <p class="zotero-search-item-metadata">${data.value.authors}</p>
+                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${data.match}</span>
+                                    <span class="zotero-search-item-authors">${data.value.authors}</span><span class="zotero-search-item-metadata"> ${data.value.meta}</span>
                                     </div>
                                     <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
                                     </a>`;
             } else if(data.key == "authors"){
                 element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
                                     <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
-                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;">${data.value.title}</span>
-                                    <p class="zotero=search-item-metadata">${data.match}</p>
+                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${data.value.title}</span>
+                                    <span class="zotero-search-item-authors">${data.match}</span><span class="zotero-search-item-metadata"> ${data.value.meta}</span>
                                     </div>
                                     <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
                                     </a>`;
@@ -1141,16 +1141,46 @@ function simplifyDataArray(arr){
     let itemsArray = arr.filter(function(el){ return el.data.itemType != "attachment" && el.data.itemType != "note" });
     // Simplify data structure
     itemsArray.forEach(function(item, index, array){
+        // Title - searchable
         let titleString = (item.data.title) ? item.data.title : "";
+        // Authors (simplified) - searchable
+        let authorsString = (item.meta.creatorSummary) ? item.meta.creatorSummary : "";
+        let metadataString = "";
+        // Year - searchable
+        let itemDate = "";
         if(item.meta.parsedDate){
-            let itemDate = new Date(item.meta.parsedDate);
+            itemDate = new Date(item.meta.parsedDate);
             itemDate = itemDate.getUTCFullYear().toString();
-            titleString = titleString + " (" + itemDate + ")";
+            metadataString = metadataString + "(" + itemDate + ")";
+        }
+        if(item.data.publicationTitle) {
+            metadataString = metadataString + ", " + item.data.publicationTitle
+        } else if(item.data.university){
+            metadataString = metadataString + ", " + item.data.university;
+        } else if(item.data.bookTitle){
+            metadataString = metadataString + ", in " + item.data.bookTitle;
+        };
+        if(item.data.publisher){
+            metadataString = metadataString + ", " + item.data.publisher;
+            if(item.data.place){
+                metadataString = metadataString + ": " + item.data.place;
+            }
+        };
+        if(item.data.volume){
+            metadataString = metadataString + ", " + item.data.volume;
+            if(item.data.issue){
+                metadataString = metadataString + "(" + item.data.issue + ")"
+            }
+        }
+        if(item.data.pages){
+            metadataString = metadataString + ", " + item.data.pages + ".";
         }
         array[index] = {
             key: item.key,
             title: titleString,
-            authors: (item.meta.creatorSummary) ? item.meta.creatorSummary : ""
+            authors: authorsString,
+            year: itemDate,
+            meta: metadataString
         }
     })
 
