@@ -1069,7 +1069,7 @@ function createZoteroSearchOverlay(){
 
     let searchDialogDiv = document.createElement("div");
     searchDialogDiv.classList.add("bp3-dialog");
-    searchDialogDiv.style = "width:60%;";
+    searchDialogDiv.style = "width:60%;align-self:baseline;";
 
     let searchDialogHeader = document.createElement("div");
     searchDialogHeader.classList.add("bp3-dialog-header");
