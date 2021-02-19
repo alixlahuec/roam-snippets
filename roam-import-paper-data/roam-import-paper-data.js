@@ -467,7 +467,7 @@ function removeRequestResults() {
         // But make sure to remove the attribute to allow for a fresh check, and the context menu listener as well
         ref.removeAttribute("data-zotero-bib");
         ref.querySelector('.rm-page-ref').removeEventListener("contextmenu", addListenerToRefCitekey);
-        document.getElementById("zotero-data-icon", addListenerToZoteroIcon);
+        document.getElementById("zotero-data-icon").removeEventListener("contextmenu", addListenerToZoteroIcon);
     }
 }
 
