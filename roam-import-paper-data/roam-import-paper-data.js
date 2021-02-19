@@ -274,6 +274,7 @@ async function zoteroDataGetter() {
                 console.log('The results of the API request have been received ; you can check them by inspecting the value of the ZoteroData object. Data import context menu should now be available.');
 
                 setupZoteroSearchOverlay();
+                setupZoteroSearchOpenShortcut();
                 setupClearingSelectedItemDiv();
             }
         }
@@ -282,6 +283,7 @@ async function zoteroDataGetter() {
         document.getElementById('zotero-data-icon').setAttribute("status", "off");
         ZoteroData = null;
         zoteroSearch.unInit();
+        disableZoteroSearchOpenShortcut();
         removeRequestResults();
         document.removeEventListener('blur', runZoteroDataGetter, true);
         window.removeEventListener('locationchange', runZoteroDataGetter, true);
@@ -1323,4 +1325,20 @@ async function waitForPageUID(page_title) {
     } catch (e) {
         console.error(e);
     }
+}
+
+function setupZoteroSearchOpenShortcut(){
+    // Add listener for Ctrl-Q keypress
+    window.addEventListener("keydown", zoteroSearchOpenShortcut);
+}
+
+function zoteroSearchOpenShortcut(e){
+    if(e.key === "q" && e.ctrlKey){
+        let cmd = zoteroSearchVisible ? "hide" : "show";
+        toggleZoteroSearchOverlay(cmd);
+    }
+}
+
+function disableZoteroSearchOpenShortcut(){
+    window.removeEventListener("keydown", zoteroSearchOpenShortcut);
 }
