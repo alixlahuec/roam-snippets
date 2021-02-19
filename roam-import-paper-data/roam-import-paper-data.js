@@ -115,6 +115,14 @@ var zoteroSearchConfig = {
                                     </div>
                                     <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
                                     </a>`;
+            } else {
+                element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
+                                    <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
+                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${data.value.title}</span>
+                                    <span class="zotero-search-item-authors">${data.value.authors}</span><span class="zotero-search-item-metadata"> ${data.value.meta}</span>
+                                    </div>
+                                    <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
+                                    </a>`;
             }
 		}
 	},
