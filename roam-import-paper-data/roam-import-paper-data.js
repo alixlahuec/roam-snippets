@@ -82,6 +82,11 @@ var zoteroSearchConfig = {
     searchEngine: 'strict',
     highlight: true,
     maxResults: 20,
+    sort: (a, b) => { // Sort by author, alphabetically
+        if(a.value.authors.toLowerCase() < b.value.authors.toLowerCase()) return -1;
+        if(a.value.authors.toLowerCase() > b.value.authors.toLowerCase()) return 1;
+        return 0;
+    },
     resultsList: {
         className: "zotero-search-results-list",
         idName: "zotero-search-results-list",
