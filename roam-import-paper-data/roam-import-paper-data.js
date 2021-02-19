@@ -1328,12 +1328,12 @@ async function waitForPageUID(page_title) {
 }
 
 function setupZoteroSearchOpenShortcut(){
-    // Add listener for Ctrl-Q keypress
+    // Add listener for Alt-Q keypress
     window.addEventListener("keydown", zoteroSearchOpenShortcut);
 }
 
 function zoteroSearchOpenShortcut(e){
-    if(e.key === "q" && e.ctrlKey){
+    if(e.key === "q" && e.altKey){
         let cmd = zoteroSearchVisible ? "hide" : "show";
         toggleZoteroSearchOverlay(cmd);
     }
