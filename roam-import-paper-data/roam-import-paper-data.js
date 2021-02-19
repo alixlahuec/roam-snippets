@@ -206,7 +206,6 @@ if (document.getElementById('zotero-data-icon') == null) {
 
     setupZoteroUpdateButton();
     setupZoteroSearchClose();
-    setupClearingSelectedItemDiv();
 }
 
 // FUNCTIONS
@@ -275,6 +274,7 @@ async function zoteroDataGetter() {
                 console.log('The results of the API request have been received ; you can check them by inspecting the value of the ZoteroData object. Data import context menu should now be available.');
 
                 setupZoteroSearchOverlay();
+                setupClearingSelectedItemDiv();
             }
         }
     } else {
