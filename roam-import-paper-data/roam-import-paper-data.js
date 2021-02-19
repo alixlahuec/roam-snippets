@@ -1199,7 +1199,7 @@ function setupZoteroSearchClose(){
 }
 
 function setupClearingSelectedItemDiv(){
-    zoteroSearch.addEventListener("input", "clearSelectedItemDiv");
+    zoteroSearchInput.addEventListener("input", clearSelectedItemDiv);
 }
 
 function clearSelectedItemDiv(){
