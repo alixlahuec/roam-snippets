@@ -139,11 +139,15 @@ var zoteroSearchConfig = {
             .appendChild(result);
     },
     onSelection: (feedback) => {
+
+        document.querySelector("#zotero-search-autocomplete").blur();
+        document.querySelector("#zotero-search-autocomplete").value = feedback.selection.value.key;
+
         let citekey = "@" + feedback.selection.value.key;
         let pageInGraph = lookForPage(citekey);
         let iconName = (pageInGraph.present == true) ? "tick" : "cross";
         let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
-        let itemInfo = (pageInGraph.present == true) ? "Page already exists in the graph" : "Page not found in the graph";
+        let itemInfo = (pageInGraph.present == true) ? "Page already exists in the graph : " : "Page not found in the graph";
         let pageUID = (pageInGraph.uid) ? pageInGraph.uid : "";
         
         let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
@@ -154,12 +158,26 @@ var zoteroSearchConfig = {
                                 </ul>`;
 
         let graphInfoDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-graph-info");
-        graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-minimal bp3-intent-${iconIntent}"></span>
-                                <span>${itemInfo}</span></div>
+        if(pageInGraph.present == true){
+            graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-minimal bp3-intent-${iconIntent}"></span>
+                                <span>${itemInfo}</span>
+                                <span data-link-title="${citekey}" data-link-uid="${pageInGraph.uid}">
+                                <span tabindex="-1" class="rm-page-ref rm-page-ref--link">${citekey}</span></span>
+                                </div>
                                 <div>
-                                <span class="bp3-icon-add bp3-minimal"></span>
+                                <span class="bp3-icon-add bp3-icon"></span>
                                 <a class="zotero-search-import-item" onclick="addSearchResult(${citekey},${pageUID})">Import data to Roam</a>
-                                </div>`
+                                </div>`;
+        } else {
+            graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-minimal bp3-intent-${iconIntent}"></span>
+                                <span>${itemInfo}</span>
+                                </div>
+                                <div>
+                                <span class="bp3-icon-add bp3-icon"></span>
+                                <a class="zotero-search-import-item" onclick="addSearchResult(${citekey},${pageUID})">Import data to Roam</a>
+                                </div>`;
+        }
+        
     }
 };
 
@@ -188,6 +206,7 @@ if (document.getElementById('zotero-data-icon') == null) {
 
     setupZoteroUpdateButton();
     setupZoteroSearchClose();
+    setupClearingSelectedItemDiv();
 }
 
 // FUNCTIONS
@@ -1177,6 +1196,17 @@ function setupZoteroSearchClose(){
             toggleZoteroSearchOverlay("hide");
         }
     })
+}
+
+function setupClearingSelectedItemDiv(){
+    zoteroSearch.addEventListener("input", "clearSelectedItemDiv");
+}
+
+function clearSelectedItemDiv(){
+    let divContents = document.querySelectorAll("#zotero-search-selected-item > div");
+    for(i=0;i < divContents.length;i++){
+        divContents[i].innerHTML = "";
+    }
 }
 
 // Function to process ZoteroData into a simplified, more usable data array for the autoComplete
