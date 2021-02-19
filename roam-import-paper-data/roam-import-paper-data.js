@@ -471,7 +471,7 @@ function removeRequestResults() {
     }
 }
 
-const toggleZoteroDataMenu = command => {
+function toggleZoteroDataMenu(command) {
     zoteroContextMenu.style.display = command === "show" ? "block" : "none";
     zoteroContextBackdrop.style.display = command === "show" ? "block" : "none";
     if (command == "show") {
@@ -482,7 +482,7 @@ const toggleZoteroDataMenu = command => {
 }
 
 // Toggle for state of context menu for the extension icon (> "Update data" functionality)
-const toggleZoteroIconMenu = command => {
+function toggleZoteroIconMenu(command) {
     zoteroIconContextMenu.style.display = command === "show" ? "block" : "none";
     zoteroIconContextBackdrop.style.display = command === "show" ? "block" : "none";
     if (command == "show") {
@@ -492,14 +492,14 @@ const toggleZoteroIconMenu = command => {
     }
 }
 
-const setPositionZoteroDataMenu = ({ top, left }) => {
+function setPositionZoteroDataMenu({ top, left }){
     zoteroContextMenu.style.left = `${left}px`;
     zoteroContextMenu.style.top = `${top}px`;
     toggleZoteroDataMenu("show");
 }
 
 // Set the position of the context menu for the extension icon (> "Update data" functionality)
-const setPositionZoteroIconMenu = ({ top, left }) => {
+function setPositionZoteroIconMenu({ top, left }){
     if(left >= 0.9*window.innerWidth){
         zoteroIconContextMenu.style.left = `calc(${left}px - 7%)`;
     } else {
@@ -1164,7 +1164,7 @@ function setupZoteroSearchOverlay(){
 }
 
 // Toggles the display of the search overlay
-const toggleZoteroSearchOverlay = command => {
+function toggleZoteroSearchOverlay(command) {
     zoteroSearchOverlay.style.display = command === "show" ? "block" : "none";
     if (command == "show") {
         zoteroSearchInput.focus();
