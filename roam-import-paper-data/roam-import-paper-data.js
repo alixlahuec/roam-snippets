@@ -76,7 +76,12 @@ var zoteroSearchConfig = {
             }
         },
         key: ['title', 'authorsFull', 'year', 'tags'],
-        cache: false
+        cache: false,
+        results: (list) => {
+            // Make sure to return only one result per item in the dataset, by gathering all indices & returning only the first match for that index
+            const filteredMatches = Array.from(new Set(list.map((item) => item.index))).map((index) => {return list.find(item => item.index === index)});
+            return filteredMatches;
+        }
     },
     selector: '#zotero-search-autocomplete',
     searchEngine: 'strict',
