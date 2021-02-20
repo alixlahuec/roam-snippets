@@ -104,40 +104,37 @@ var zoteroSearchConfig = {
         className: "zotero-search_result",
         idName: "zotero-search_result",
 		content: (data, element) => {
+            let itemCitekey = `<span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>`;
+            let itemMetadata = `<span class="zotero-search-item-metadata"> ${data.value.meta}</span>`;
+            let itemTitleContent = (data.key == "title") ? data.match : data.value.title;
+            let itemTitle = `<span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${itemTitleContent}</span>`;
+            // Prepare authors element, if there are any
+            let itemAuthors = "";
+            if(data.value.authors){
+                // If the match is in the full list of authors, manually add the .autoComplete_highlighted class to the abbreviated authors span
+                if(data.key == "authorsFull"){
+                    itemAuthors = `<span class="zotero-search-item-authors autoComplete_highlighted">${data.value.authors}</span>`;
+                } else {
+                    itemAuthors = `<span class="zotero-search-item-authors">${data.value.authors}</span>`;
+                }
+            }
             // Prepare tags element, if there are any
-            let itemTags = data.value.tags;
-            let itemTagsElem = "";
-            if(itemTags.length > 0){
-                let tagsArray = itemTags.map(i => "#"+i).filter(Boolean).join(", ");
-                itemTagsElem = `<span class="zotero-search-item-tags" style="font-style:italic;color:#ececec;display:block;">${tagsArray}</span>`;
+            let itemTags = "";
+            if(data.value.tagsString){
+                let itemTagsContent = (data.key == "tagsString") ? data.match : data.value.tagsString;
+                itemTags = `<span class="zotero-search-item-tags" style="font-style:italic;color:#c1c0c0;display:block;">${itemTagsContent}</span>`;
             }
 
-            if(data.key == "title"){
-                element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
-                                    <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
-                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${data.match}</span>
-                                    <span class="zotero-search-item-authors">${data.value.authors}</span><span class="zotero-search-item-metadata"> ${data.value.meta}</span>
-                                    ${itemTagsElem}
-                                    </div>
-                                    <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
-                                    </a>`;
-            } else if(data.key == "authorsFull"){
-                element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
-                                    <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
-                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${data.value.title}</span>
-                                    <span class="zotero-search-item-authors autoComplete_highlighted">${data.value.authors}</span><span class="zotero-search-item-metadata"> ${data.value.meta}</span>
-                                    </div>
-                                    <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
-                                    </a>`;
-            } else {
-                element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
-                                    <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
-                                    <span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${data.value.title}</span>
-                                    <span class="zotero-search-item-authors">${data.value.authors}</span><span class="zotero-search-item-metadata"> ${data.value.meta}</span>
-                                    </div>
-                                    <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
-                                    </a>`;
-            }
+            // Render the element's template
+            element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
+                                <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
+                                ${itemTitle}
+                                ${itemAuthors}${itemMetadata}
+                                ${itemTags}
+                                </div>
+                                ${itemCitekey}
+                                </a>`;
+  
 		}
 	},
     noResults: (dataFeedback, generateList) => {
@@ -164,18 +161,20 @@ var zoteroSearchConfig = {
         let itemInfo = (pageInGraph.present == true) ? "Page already exists in the graph : " : "Page not found in the graph";
         let pageUID = (pageInGraph.uid) ? ("," + pageInGraph.uid) : "";
 
-        // Display list of authors as bp3 tags
+        // Generate list of authors as bp3 tags or Roam page references
         let infoAuthors = feedback.selection.value.authorsFull;
         let stringAuthors = "";
         if(infoAuthors.length > 0){
             stringAuthors = `<li>Author(s) : `;
             for(i=0; i < infoAuthors.length; i++){
-                stringAuthors = stringAuthors + `<span class="bp3-tag bp3-large bp3-minimal">${infoAuthors[i]}</span>`;
+                let authorInGraph = lookForPage(title = infoAuthors[i]);
+                let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i]);
+                stringAuthors = stringAuthors + authorElem;
             }
             stringAuthors = stringAuthors + `</li>`;
         } 
 
-        // Display list of tags as bp3 tags
+        // Generate list of tags as bp3 tags or Roam page references
         let infoTags = feedback.selection.value.tags;
         let stringTags = "";
         if(infoTags.length > 0){
@@ -188,6 +187,7 @@ var zoteroSearchConfig = {
             stringTags = stringTags + `</li>`;
         } 
         
+        // Render the metadata section
         let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
         metadataDiv.innerHTML = `<ul>
                                 <li>Title : ${feedback.selection.value.title}</li>
@@ -195,26 +195,18 @@ var zoteroSearchConfig = {
                                 ${stringTags}
                                 </ul>`;
 
+        // Render the graph info section
         let graphInfoDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-graph-info");
-        if(pageInGraph.present == true){
-            let pageRef = renderPageReference(title = citekey, uid = pageInGraph.uid)
-            graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span>
-                                <span>${itemInfo}</span>
-                                ${pageRef}
-                                </div>
-                                <div>
-                                <span class="bp3-icon-add bp3-icon"></span>
-                                <a class="zotero-search-import-item" onclick="addSearchResult(${citekey},${pageUID})">Import data to Roam</a>
-                                </div>`;
-        } else {
-            graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span>
-                                <span>${itemInfo}</span>
-                                </div>
-                                <div>
-                                <span class="bp3-icon-add bp3-icon"></span>
-                                <a class="zotero-search-import-item" onclick="addSearchResult(${citekey}${pageUID})">Import data to Roam</a>
-                                </div>`;
-        }
+        let pageRef = (pageInGraph.present == true) ? renderPageReference(title = citekey, uid = pageInGraph.uid) : "";
+
+        graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span>
+                            <span>${itemInfo}</span>
+                            ${pageRef}
+                            </div>
+                            <div>
+                            <span class="bp3-icon-add bp3-icon"></span>
+                            <a class="zotero-search-import-item" onclick="addSearchResult(${citekey},${pageUID})">Import data to Roam</a>
+                            </div>`;
         
     }
 };
