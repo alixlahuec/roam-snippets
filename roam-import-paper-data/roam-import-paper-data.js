@@ -154,12 +154,33 @@ var zoteroSearchConfig = {
         let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
         let itemInfo = (pageInGraph.present == true) ? "Page already exists in the graph : " : "Page not found in the graph";
         let pageUID = (pageInGraph.uid) ? ("," + pageInGraph.uid) : "";
+
+        // Display list of authors as bp3 tags
+        let infoAuthors = feedback.selection.value.authorsFull;
+        let stringAuthors = "";
+        if(infoAuthors.length > 0){
+            stringAuthors = "Author(s) : ";
+            for(i=0; i < infoAuthors.length; i++){
+                stringAuthors = stringAuthors + `<span class="bp3-tag bp3-large bp3-minimal">${infoAuthors[i]}</span>`;
+            }
+        } 
+
+        // Display list of tags as bp3 tags
+        let infoTags = feedback.selection.value.tags;
+        let stringTags = "";
+        if(infoTags.length > 0){
+            stringTags = "Tags : ";
+            for(i=0; i < infoTags.length; i++){
+                stringTags = stringTags + `<span class="bp3-tag bp3-large bp3-minimal">${infoTags[i]}</span>`;
+            }
+        } 
         
         let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
         metadataDiv.innerHTML = `<ul>
                                 <li>Item key : ${feedback.selection.value.key}</li>
                                 <li>Title : ${feedback.selection.value.title}</li>
-                                <li>Author(s) : ${feedback.selection.value.authors}</li>
+                                <li>${stringAuthors}</li>
+                                <li>${stringTags}</li>
                                 </ul>`;
 
         let graphInfoDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-graph-info");
@@ -1265,7 +1286,7 @@ function simplifyDataArray(arr){
 
         let authorsArray = [];
         if(item.data.creators.length > 0){
-            authorsArray = item.data.creators.map(i => i.firstName + ' ' + i.lastName);
+            authorsArray = item.data.creators.map(i => [i.firstName, i.lastName].filter(Boolean).join(" "));
         }
 
         // Stitch the results
