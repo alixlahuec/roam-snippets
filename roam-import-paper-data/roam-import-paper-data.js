@@ -1203,6 +1203,7 @@ function toggleZoteroSearchOverlay(command) {
         zoteroSearchInput.focus();
         zoteroSearchVisible = true
     } else {
+        clearSelectedItemDiv();
         zoteroSearchInput.value = "";
         zoteroSearchVisible = false
     }
