@@ -75,7 +75,7 @@ var zoteroSearchConfig = {
                 return simplifyDataArray(ZoteroData);
             }
         },
-        key: ['title', 'authorsFull', 'year', 'tags'],
+        key: ['title', 'authorsFull', 'year', 'tagsString'],
         cache: false,
         results: (list) => {
             // Make sure to return only one result per item in the dataset, by gathering all indices & returning only the first match for that index
@@ -104,11 +104,20 @@ var zoteroSearchConfig = {
         className: "zotero-search_result",
         idName: "zotero-search_result",
 		content: (data, element) => {
+            // Prepare tags element, if there are any
+            let itemTags = data.value.tags;
+            let itemTagsElem = "";
+            if(itemTags.length > 0){
+                let tagsArray = itemTags.map(i => "#"+i).filter(Boolean).join(", ");
+                itemTagsElem = `<span class="zotero-search-item-tags" style="font-style:italic;color:#ececec;display:block;">${tagsArray}</span>`;
+            }
+
             if(data.key == "title"){
                 element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
                                     <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
                                     <span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${data.match}</span>
                                     <span class="zotero-search-item-authors">${data.value.authors}</span><span class="zotero-search-item-metadata"> ${data.value.meta}</span>
+                                    ${itemTagsElem}
                                     </div>
                                     <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
                                     </a>`;
@@ -1287,6 +1296,11 @@ function simplifyDataArray(arr){
             tagsArray = item.data.tags.map(i => i.tag);
         }
 
+        let tagsString = "";
+        if(tagsArray.length > 0){
+            tagsString = tagsArray.map(i => "#"+i).filter(Boolean).join(", ");
+        }
+
         let authorsArray = [];
         if(item.data.creators.length > 0){
             authorsArray = item.data.creators.map(i => [i.firstName, i.lastName].filter(Boolean).join(" "));
@@ -1300,7 +1314,8 @@ function simplifyDataArray(arr){
             year: itemDate,
             meta: metadataString,
             tags: tagsArray,
-            authorsFull: authorsArray
+            authorsFull: authorsArray,
+            tagsString: tagsString
         }
     })
 
@@ -1402,7 +1417,7 @@ function renderPageReference(title, uid){
     <span tabindex="-1" class="rm-page-ref rm-page-ref--link">${title}</span></span>`;
 }
 
-
+// Return HTML code for a BP3 tag (large, minimal)
 function renderBP3Tag(string){
     return `<span class="bp3-tag bp3-large bp3-minimal">${string}</span>`;
 }
