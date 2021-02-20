@@ -168,20 +168,20 @@ var zoteroSearchConfig = {
             stringAuthors = `<li>Author(s) : `;
             for(i=0; i < infoAuthors.length; i++){
                 let authorInGraph = lookForPage(title = infoAuthors[i]);
-                let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i]);
+                let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i], modifier = "bp3-large");
                 stringAuthors = stringAuthors + authorElem;
             }
             stringAuthors = stringAuthors + `</li>`;
         } 
 
-        // Generate list of tags as bp3 tags or Roam page references
+        // Generate list of tags as bp3 tags or Roam tags
         let infoTags = feedback.selection.value.tags;
         let stringTags = "";
         if(infoTags.length > 0){
             stringTags = `<li>Tags : `;
             for(i=0; i < infoTags.length; i++){
                 let tagInGraph = lookForPage(title = infoTags[i]);
-                let tagElem = (tagInGraph.present == true) ? renderPageReference(title = infoTags[i], uid = tagInGraph.uid) : renderBP3Tag(string = infoTags[i]);
+                let tagElem = (tagInGraph.present == true) ? renderPageTag(title = infoTags[i]) : renderBP3Tag(string = infoTags[i]);
                 stringTags = stringTags + tagElem;
             }
             stringTags = stringTags + `</li>`;
@@ -1395,11 +1395,12 @@ function disableZoteroSearchOpenShortcut(){
     window.removeEventListener("keydown", zoteroSearchOpenShortcut);
 }
 
-// Add CSS styling for item navigation + match highlight
+// Add CSS styling for item navigation + match highlight + selection display
 function addAutoCompleteCSS(){
     let autoCompleteCSS = document.createElement('style');
     autoCompleteCSS.textContent = `li.autoComplete_selected{background-color:#e7f3f7;}
-                                    span.autoComplete_highlighted{color:#146cb7;}`;
+                                    span.autoComplete_highlighted{color:#146cb7;}
+                                    .zotero-search-selected-item-metadata`;
     document.head.append(autoCompleteCSS);
 }
 
@@ -1410,7 +1411,13 @@ function renderPageReference(title, uid){
     <span tabindex="-1" class="rm-page-ref rm-page-ref--link">${title}</span></span>`;
 }
 
-// Return HTML code for a BP3 tag (large, minimal)
-function renderBP3Tag(string){
-    return `<span class="bp3-tag bp3-large bp3-minimal">${string}</span>`;
+// Return HTML code for a Roam tag
+// Note: the native events won't work on these tags
+function renderPageTag(title){
+    return `<span tabindex="-1" data-tag="${title}" class="rm-page-ref rm-page-ref--tag">#${title}</span>`;
+}
+
+// Return HTML code for a BP3 tag (minimal)
+function renderBP3Tag(string, modifier = ""){
+    return `<span class="bp3-tag bp3-minimal ${modifier}" style="margin:5px;">${string}</span>`;
 }
