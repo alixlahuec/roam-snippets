@@ -215,7 +215,7 @@ var zoteroSearchConfig = {
         
         document.getElementById("zotero-search-selected-item").querySelector("a.zotero-search-import-item").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
 
-        let selectedItemDiv = document.querySelectorAll("#zotero-search-selected-item");
+        let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
         selectedItemDiv.style.display = "block";
         
     }
@@ -1252,7 +1252,7 @@ function setupClearingSelectedItemDiv(){
 }
 
 function clearSelectedItemDiv(){
-    let selectedItemDiv = document.querySelectorAll("#zotero-search-selected-item");
+    let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
     let divContents = document.querySelectorAll("#zotero-search-selected-item > div");
     for(i=0;i < divContents.length;i++){
         divContents[i].innerHTML = "";
