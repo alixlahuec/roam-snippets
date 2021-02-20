@@ -159,7 +159,7 @@ var zoteroSearchConfig = {
 
         let graphInfoDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-graph-info");
         if(pageInGraph.present == true){
-            graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-minimal bp3-intent-${iconIntent}"></span>
+            graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span>
                                 <span>${itemInfo}</span>
                                 <span data-link-title="${citekey}" data-link-uid="${pageInGraph.uid}">
                                 <span tabindex="-1" class="rm-page-ref rm-page-ref--link">${citekey}</span></span>
@@ -169,7 +169,7 @@ var zoteroSearchConfig = {
                                 <a class="zotero-search-import-item" onclick="addSearchResult(${citekey},${pageUID})">Import data to Roam</a>
                                 </div>`;
         } else {
-            graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-minimal bp3-intent-${iconIntent}"></span>
+            graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span>
                                 <span>${itemInfo}</span>
                                 </div>
                                 <div>
