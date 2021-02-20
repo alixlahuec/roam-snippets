@@ -212,7 +212,7 @@ var zoteroSearchConfig = {
         let itemInfo = (pageInGraph.present == true) ? (`Page already exists in the graph : ` + renderPageReference(title = citekey, uid = pageUID)) : "Page doesn't exist in the graph";
 
         graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span><span> ${itemInfo}</span></div>
-                            <div><span class="bp3-icon-add bp3-icon"></span><a class="zotero-search-import-item"> Import data to Roam</a></div>`;
+                            <div><span class="bp3-icon-add bp3-icon"></span><a class="zotero-search-import-item"> Import metadata into Roam</a></div>`;
         
         document.getElementById("zotero-search-selected-item").querySelector("a.zotero-search-import-item").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
 
@@ -1145,13 +1145,14 @@ function createZoteroSearchOverlay(){
 
     // Add header elements
     searchDialogHeader.innerHTML = `<h4 class="bp3-heading">Zotero Search</h4>
+                                    <span style="font-style:italic;">Press Esc or Alt-Q to exit</span>
                                     <button type="button" aria-label="Close" class="zotero-search-close bp3-button bp3-minimal bp3-dialog-close-button">
                                     <span icon="small-cross" class="bp3-icon bp3-icon-small-cross"><svg data-icon="small-cross" width="20" height="20" viewBox="0 0 20 20"><desc>small-cross</desc><path d="M11.41 10l3.29-3.29c.19-.18.3-.43.3-.71a1.003 1.003 0 00-1.71-.71L10 8.59l-3.29-3.3a1.003 1.003 0 00-1.42 1.42L8.59 10 5.3 13.29c-.19.18-.3.43-.3.71a1.003 1.003 0 001.71.71l3.29-3.3 3.29 3.29c.18.19.43.3.71.3a1.003 1.003 0 00.71-1.71L11.41 10z" fill-rule="evenodd"></path></svg></span></button>`
 
     // Add body elements
     let parText = document.createElement("p");
     parText.innerHTML = `<strong>Enter text below to look for items* in your loaded Zotero dataset.</strong>
-                    <br>(* only the title, year and first author fields will be searched. A more fully-featured search is coming soon - please use the <a href="http://example.com">feedback form</a> to let me know what you'd like to have.)`
+                    <br>(* searchable fields are : title, year, authors, tags. A more fully-featured search will be available down the road)`
     searchDialogBody.appendChild(parText);
 
     let searchBar = document.createElement('input');
