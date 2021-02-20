@@ -75,7 +75,7 @@ var zoteroSearchConfig = {
                 return simplifyDataArray(ZoteroData);
             }
         },
-        key: ['title', 'authors', 'year'],
+        key: ['title', 'authorsFull', 'year', 'tags'],
         cache: false
     },
     selector: '#zotero-search-autocomplete',
@@ -107,11 +107,11 @@ var zoteroSearchConfig = {
                                     </div>
                                     <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
                                     </a>`;
-            } else if(data.key == "authors"){
+            } else if(data.key == "authorsFull"){
                 element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
                                     <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
                                     <span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${data.value.title}</span>
-                                    <span class="zotero-search-item-authors">${data.match}</span><span class="zotero-search-item-metadata"> ${data.value.meta}</span>
+                                    <span class="zotero-search-item-authors autoComplete_highlighted">${data.value.authors}</span><span class="zotero-search-item-metadata"> ${data.value.meta}</span>
                                     </div>
                                     <span class="bp3-menu-item-label zotero-search-item-key">${data.value.key}</span>
                                     </a>`;
@@ -1252,12 +1252,26 @@ function simplifyDataArray(arr){
         if(item.data.pages){
             metadataString = metadataString + ", " + item.data.pages + ".";
         }
+
+        let tagsArray = [];
+        if(item.data.tags.length > 0){
+            tagsArray = item.data.tags.map(i => i.tag);
+        }
+
+        let authorsArray = [];
+        if(item.data.creators.length > 0){
+            authorsArray = item.data.creators.map(i => i.firstName + ' ' + i.lastName);
+        }
+
+        // Stitch the results
         array[index] = {
             key: item.key,
             title: titleString,
             authors: authorsString,
             year: itemDate,
-            meta: metadataString
+            meta: metadataString,
+            tags: tagsArray,
+            authorsFull: authorsArray
         }
     })
 
@@ -1351,9 +1365,3 @@ function addAutoCompleteCSS(){
                                     span.autoComplete_highlighted{color:#146cb7;}`;
     document.head.append(autoCompleteCSS);
 }
-
-// li.autoComplete_selected
-// background-color: #e7f3f7
-
-// span.autoComplete_highlighted
-// color: #146cb7
