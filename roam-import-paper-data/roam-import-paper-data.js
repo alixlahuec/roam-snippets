@@ -191,7 +191,7 @@ var zoteroSearchConfig = {
             for(i=0; i < infoTags.length; i++){
                 let tagInGraph = lookForPage(title = infoTags[i]);
                 let tagElem = (tagInGraph.present == true) ? renderPageTag(title = infoTags[i]) : renderBP3Tag(string = infoTags[i]);
-                divTags = divTags + tagElem;
+                divTags = divTags + tagElem + " ";
             }
             divTags = divTags + `</p>`;
         } 
