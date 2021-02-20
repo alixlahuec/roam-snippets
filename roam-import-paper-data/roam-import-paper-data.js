@@ -159,36 +159,39 @@ var zoteroSearchConfig = {
         let infoAuthors = feedback.selection.value.authorsFull;
         let stringAuthors = "";
         if(infoAuthors.length > 0){
-            stringAuthors = "Author(s) : ";
+            stringAuthors = `<li>Author(s) : `;
             for(i=0; i < infoAuthors.length; i++){
                 stringAuthors = stringAuthors + `<span class="bp3-tag bp3-large bp3-minimal">${infoAuthors[i]}</span>`;
             }
+            stringAuthors = stringAuthors + `</li>`;
         } 
 
         // Display list of tags as bp3 tags
         let infoTags = feedback.selection.value.tags;
         let stringTags = "";
         if(infoTags.length > 0){
-            stringTags = "Tags : ";
+            stringTags = `<li>Tags : `;
             for(i=0; i < infoTags.length; i++){
-                stringTags = stringTags + `<span class="bp3-tag bp3-large bp3-minimal">${infoTags[i]}</span>`;
+                let tagInGraph = lookForPage(title = infoTags[i]);
+                let tagElem = (tagInGraph.present == true) ? renderPageReference(title = infoTags[i], uid = tagInGraph.uid) : renderBP3Tag(string = infoTags[i]);
+                stringTags = stringTags + tagElem;
             }
+            stringTags = stringTags + `</li>`;
         } 
         
         let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
         metadataDiv.innerHTML = `<ul>
-                                <li>Item key : ${feedback.selection.value.key}</li>
                                 <li>Title : ${feedback.selection.value.title}</li>
-                                <li>${stringAuthors}</li>
-                                <li>${stringTags}</li>
+                                ${stringAuthors}
+                                ${stringTags}
                                 </ul>`;
 
         let graphInfoDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-graph-info");
         if(pageInGraph.present == true){
+            let pageRef = renderPageReference(title = citekey, uid = pageInGraph.uid)
             graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span>
                                 <span>${itemInfo}</span>
-                                <span data-link-title="${citekey}" data-link-uid="${pageInGraph.uid}">
-                                <span tabindex="-1" class="rm-page-ref rm-page-ref--link">${citekey}</span></span>
+                                ${pageRef}
                                 </div>
                                 <div>
                                 <span class="bp3-icon-add bp3-icon"></span>
@@ -1390,4 +1393,16 @@ function addAutoCompleteCSS(){
     autoCompleteCSS.textContent = `li.autoComplete_selected{background-color:#e7f3f7;}
                                     span.autoComplete_highlighted{color:#146cb7;}`;
     document.head.append(autoCompleteCSS);
+}
+
+// Return HTML code for a Roam page reference (no brackets)
+// Note: the native events won't work on these references
+function renderPageReference(title, uid){
+    return `<span data-link-title="${title}" data-link-uid="${uid}">
+    <span tabindex="-1" class="rm-page-ref rm-page-ref--link">${title}</span></span>`;
+}
+
+
+function renderBP3Tag(string){
+    return `<span class="bp3-tag bp3-large bp3-minimal">${string}</span>`;
 }
