@@ -206,7 +206,7 @@ var zoteroSearchConfig = {
         // Render the graph info section
         let graphInfoDiv = document.querySelector(".zotero-search-selected-item-graph-info");
         let pageInGraph = lookForPage(citekey);
-        let pageUID = (pageInGraph.uid) ? ("," + pageInGraph.uid) : "";
+        let pageUID = (pageInGraph.uid) ? pageInGraph.uid : "";
         let iconName = (pageInGraph.present == true) ? "tick" : "cross";
         let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
         let itemInfo = (pageInGraph.present == true) ? (`Page already exists in the graph : ` + renderPageReference(title = citekey, uid = pageUID)) : "Page doesn't exist in the graph";
