@@ -206,6 +206,7 @@ if (document.getElementById('zotero-data-icon') == null) {
 
     setupZoteroUpdateButton();
     setupZoteroSearchClose();
+    addAutoCompleteCSS();
 }
 
 // FUNCTIONS
@@ -1342,3 +1343,17 @@ function zoteroSearchOpenShortcut(e){
 function disableZoteroSearchOpenShortcut(){
     window.removeEventListener("keydown", zoteroSearchOpenShortcut);
 }
+
+// Add CSS styling for item navigation + match highlight
+function addAutoCompleteCSS(){
+    let autoCompleteCSS = document.createElement('style');
+    autoCompleteCSS.textContent = `li.autoComplete_selected{background-color:#e7f3f7;}
+                                    span.autoComplete_highlighted{color:#146cb7;}`;
+    document.head.append(autoCompleteCSS);
+}
+
+// li.autoComplete_selected
+// background-color: #e7f3f7
+
+// span.autoComplete_highlighted
+// color: #146cb7
