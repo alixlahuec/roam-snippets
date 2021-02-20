@@ -153,7 +153,7 @@ var zoteroSearchConfig = {
         let iconName = (pageInGraph.present == true) ? "tick" : "cross";
         let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
         let itemInfo = (pageInGraph.present == true) ? "Page already exists in the graph : " : "Page not found in the graph";
-        let pageUID = (pageInGraph.uid) ? pageInGraph.uid : "";
+        let pageUID = (pageInGraph.uid) ? ("," + pageInGraph.uid) : "";
         
         let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
         metadataDiv.innerHTML = `<ul>
@@ -179,7 +179,7 @@ var zoteroSearchConfig = {
                                 </div>
                                 <div>
                                 <span class="bp3-icon-add bp3-icon"></span>
-                                <a class="zotero-search-import-item" onclick="addSearchResult(${citekey},${pageUID})">Import data to Roam</a>
+                                <a class="zotero-search-import-item" onclick="addSearchResult(${citekey}${pageUID})">Import data to Roam</a>
                                 </div>`;
         }
         
