@@ -108,6 +108,13 @@ var zoteroSearchConfig = {
             let itemMetadata = `<span class="zotero-search-item-metadata"> ${data.value.meta}</span>`;
             let itemTitleContent = (data.key == "title") ? data.match : data.value.title;
             let itemTitle = `<span class="zotero-search-item-title" style="font-weight:bold;color:black;display:block;">${itemTitleContent}</span>`;
+
+            let itemYear = "";
+            if(data.value.year){
+                let itemYearContent = (data.key == "year") ? data.match : data.value.year;
+                itemYear = `<span class="zotero-search-item-year"> (${itemYearContent})</span>`;
+            }
+
             // Prepare authors element, if there are any
             let itemAuthors = "";
             if(data.value.authors){
@@ -129,7 +136,7 @@ var zoteroSearchConfig = {
             element.innerHTML = `<a label="${data.value.key}" class="bp3-menu-item bp3-popover-dismiss">
                                 <div class="bp3-text-overflow-ellipsis bp3-fill zotero-search-item-contents">
                                 ${itemTitle}
-                                ${itemAuthors}${itemMetadata}
+                                ${itemAuthors}${itemYear}${itemMetadata}
                                 ${itemTags}
                                 </div>
                                 ${itemCitekey}
@@ -151,8 +158,11 @@ var zoteroSearchConfig = {
     },
     onSelection: (feedback) => {
 
-        document.querySelector("#zotero-search-autocomplete").blur();
-        document.querySelector("#zotero-search-autocomplete").value = feedback.selection.value.key;
+        zoteroSearchInput.blur();
+        zoteroSearchInput.value = '@' + feedback.selection.value.key;
+        zoteroSearchInput.select();
+        document.execCommand("copy");
+        zoteroSearchInput.blur();
 
         let citekey = "@" + feedback.selection.value.key;
         let pageInGraph = lookForPage(citekey);
@@ -160,53 +170,48 @@ var zoteroSearchConfig = {
         let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
         let itemInfo = (pageInGraph.present == true) ? "Page already exists in the graph : " : "Page not found in the graph";
         let pageUID = (pageInGraph.uid) ? ("," + pageInGraph.uid) : "";
+        let itemYear = (feedback.selection.value.year) ? (" (" + feedback.selection.value.year + ")") : "";
 
         // Generate list of authors as bp3 tags or Roam page references
         let infoAuthors = feedback.selection.value.authorsFull;
-        let stringAuthors = "";
+        let divAuthors = "";
         if(infoAuthors.length > 0){
-            stringAuthors = `<li>Author(s) : `;
             for(i=0; i < infoAuthors.length; i++){
                 let authorInGraph = lookForPage(title = infoAuthors[i]);
-                let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i], modifier = "bp3-large");
-                stringAuthors = stringAuthors + authorElem;
+                let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i], modifier = "bp3-intent-primary bp3-round");
+                divAuthors = divAuthors + authorElem;
             }
-            stringAuthors = stringAuthors + `</li>`;
         } 
 
         // Generate list of tags as bp3 tags or Roam tags
         let infoTags = feedback.selection.value.tags;
-        let stringTags = "";
+        let divTags = "";
         if(infoTags.length > 0){
-            stringTags = `<li>Tags : `;
+            divTags = `<p>`;
             for(i=0; i < infoTags.length; i++){
                 let tagInGraph = lookForPage(title = infoTags[i]);
                 let tagElem = (tagInGraph.present == true) ? renderPageTag(title = infoTags[i]) : renderBP3Tag(string = infoTags[i]);
-                stringTags = stringTags + tagElem;
+                divTags = divTags + tagElem;
             }
-            stringTags = stringTags + `</li>`;
+            divTags = divTags + `</p>`;
         } 
         
         // Render the metadata section
         let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
-        metadataDiv.innerHTML = `<ul>
-                                <li>Title : ${feedback.selection.value.title}</li>
-                                ${stringAuthors}
-                                ${stringTags}
+        metadataDiv.innerHTML = `<h4>${feedback.selection.value.title}${itemYear}</h4>
+                                <p>${divAuthors}${feedback.selection.value.meta}</p>
+                                <ul>
+                                ${divTags}
                                 </ul>`;
 
         // Render the graph info section
         let graphInfoDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-graph-info");
         let pageRef = (pageInGraph.present == true) ? renderPageReference(title = citekey, uid = pageInGraph.uid) : "";
 
-        graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span>
-                            <span>${itemInfo}</span>
-                            ${pageRef}
-                            </div>
-                            <div>
-                            <span class="bp3-icon-add bp3-icon"></span>
-                            <a class="zotero-search-import-item" onclick="addSearchResult(${citekey},${pageUID})">Import data to Roam</a>
-                            </div>`;
+        graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span><span>${itemInfo}</span>${pageRef}</div>
+                            <div><span class="bp3-icon-add bp3-icon"></span><a class="zotero-search-import-item">Import data to Roam</a></div>`;
+        
+        document.getElementById("zotero-search-selected-item").querySelector("a.zotero-search-import-item").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
         
     }
 };
@@ -1149,15 +1154,20 @@ function createZoteroSearchOverlay(){
     searchBar.type = "text";
     searchBar.classList.add("bp3-input");
     searchBar.classList.add("bp3-fill");
+    searchBar.style = "margin-bottom:20px;"
     searchDialogBody.appendChild(searchBar);
 
     let selectedItemDiv = document.createElement('div');
     selectedItemDiv.id = "zotero-search-selected-item";
+    selectedItemDiv.classList.add("bp3-card");
+    selectedItemDiv.style = "width:80%;margin:0 auto;";
 
     let selectedItemMetadata = document.createElement('div');
     selectedItemMetadata.classList.add("zotero-search-selected-item-metadata");
+    selectedItemMetadata.style = "padding: 10px 20px;";
     let selectedItemGraphInfo = document.createElement('div');
     selectedItemGraphInfo.classList.add("zotero-search-selected-item-graph-info");
+    selectedItemGraphInfo.classList.add("bp3-card");
 
     selectedItemDiv.appendChild(selectedItemMetadata);
     selectedItemDiv.appendChild(selectedItemGraphInfo);
@@ -1251,16 +1261,21 @@ function simplifyDataArray(arr){
     itemsArray.forEach(function(item, index, array){
         // Title - searchable
         let titleString = (item.data.title) ? item.data.title : "";
-        // Authors (simplified) - searchable
+
+        // Authors (simplified)
         let authorsString = (item.meta.creatorSummary) ? item.meta.creatorSummary : "";
-        let metadataString = "";
+
         // Year - searchable
         let itemDate = "";
         if(item.meta.parsedDate){
             itemDate = new Date(item.meta.parsedDate);
             itemDate = itemDate.getUTCFullYear().toString();
-            metadataString = metadataString + "(" + itemDate + ")";
         }
+
+        // Metadata string
+        let metadataString = "";
+
+        // Look first for a publication, book title, or university
         if(item.data.publicationTitle) {
             metadataString = metadataString + ", " + item.data.publicationTitle
         } else if(item.data.university){
@@ -1268,18 +1283,21 @@ function simplifyDataArray(arr){
         } else if(item.data.bookTitle){
             metadataString = metadataString + ", in " + item.data.bookTitle;
         };
+        // If the item has a publisher, add it
         if(item.data.publisher){
             metadataString = metadataString + ", " + item.data.publisher;
             if(item.data.place){
                 metadataString = metadataString + ": " + item.data.place;
             }
         };
+        // Look for volume/issue
         if(item.data.volume){
             metadataString = metadataString + ", " + item.data.volume;
             if(item.data.issue){
                 metadataString = metadataString + "(" + item.data.issue + ")"
             }
         }
+        // Look for pages info
         if(item.data.pages){
             metadataString = metadataString + ", " + item.data.pages + ".";
         }
