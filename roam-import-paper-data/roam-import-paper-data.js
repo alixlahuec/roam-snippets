@@ -200,6 +200,7 @@ var zoteroSearchConfig = {
         let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
         metadataDiv.innerHTML = `<h4>${feedback.selection.value.title}${itemYear}</h4>
                                 <p>${divAuthors}${feedback.selection.value.meta}</p>
+                                <p>${feedback.selection.value.abstract}</p>
                                 <p>${divTags}</p>`;
 
         // Render the graph info section
@@ -1309,6 +1310,7 @@ function simplifyDataArray(arr){
             metadataString = metadataString + ", " + item.data.pages + ".";
         }
 
+        // Store tags info as array + String
         let tagsArray = [];
         if(item.data.tags.length > 0){
             tagsArray = item.data.tags.map(i => i.tag);
@@ -1319,15 +1321,20 @@ function simplifyDataArray(arr){
             tagsString = tagsArray.map(i => "#"+i).filter(Boolean).join(", ");
         }
 
+        // Store full authors list as array
         let authorsArray = [];
         if(item.data.creators.length > 0){
             authorsArray = item.data.creators.map(i => [i.firstName, i.lastName].filter(Boolean).join(" "));
         }
 
+        // Get abstract if available
+        let abstractString = (item.data.abstractNote) ? item.data.abstractNote : "";
+
         // Stitch the results
         array[index] = {
             key: item.key,
             title: titleString,
+            abstract: abstractString,
             authors: authorsString,
             year: itemDate,
             meta: metadataString,
