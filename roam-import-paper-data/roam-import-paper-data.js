@@ -1,6 +1,11 @@
 
 // INITIALIZATION
 
+var ac = document.createElement("script");
+ac.src = "https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@8.3.2/dist/js/autoComplete.js";
+ac.type = "text/javascript";
+document.getElementsByTagName("head")[0].appendChild(ac);
+
 // List of mappings to determine what data should be sought for each item type
 const funcmap_default = {
     DEFAULT: "getItemMetadata"
