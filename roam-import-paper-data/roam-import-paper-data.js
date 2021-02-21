@@ -1018,7 +1018,7 @@ async function waitForBlockUID(parent_uid, string) {
         } while (tries < 50 && !found);
         // If after 50 attempts there still isn't a match, throw an error
         console.log(top_block);
-        throw new error('The top block couldn\'t be matched');
+        throw new Error('The top block couldn\'t be matched');
     } catch (e) {
         console.error(e);
     }
@@ -1383,24 +1383,29 @@ async function addSearchResult(title, uid){
         } else {
             roamAlphaAPI.createPage(title);
             let pageUID = await waitForPageUID(title);
-            await addMetadataArray(page_uid = pageUID, arr = itemData);
+            if(pageUID != null){
+                await addMetadataArray(page_uid = pageUID, arr = itemData);
+            } else {
+                console.log(pageUID);
+                throw new Error("There was a problem in obtaining the page's UID.");
+            }
         }
     } else {
-        alert("Something went wrong when attempting to format the item's data.");
         console.log(item);
         console.log(itemData);
+        throw new Error("Something went wrong when attempting to format the item's data.");
     }
 }
 
 // Get the UID of a newly-created page
-async function waitForPageUID(page_title) {
+async function waitForPageUID(title) {
     let pageUID = null;
     let found = false;
     let tries = 0;
     // As long as the page hasn't been found, keep checking it
     try {
         do {
-            pageUID = roamAlphaAPI.q("[:find ?uid :in $ ?title :where[?p :node/title ?title][?p :block/uid ?uid]]", page_title);
+            pageUID = roamAlphaAPI.q("[:find ?uid :in $ ?title :where[?p :node/title ?title][?p :block/uid ?uid]]", title);
             if(pageUID.length > 0){
                 found = true;
                 return pageUID[0][0];
