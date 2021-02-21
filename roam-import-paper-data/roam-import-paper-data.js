@@ -1381,7 +1381,7 @@ async function addSearchResult(title, uid){
         if(uid) {
             await addMetadataArray(page_uid = uid, arr = itemData);
         } else {
-            roamAlphaAPI.createPage(title);
+            roamAlphaAPI.createPage({'page': {'title': title}});
             let pageUID = await waitForPageUID(title);
             if(pageUID != null){
                 await addMetadataArray(page_uid = pageUID, arr = itemData);
