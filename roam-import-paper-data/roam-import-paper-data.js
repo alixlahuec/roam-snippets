@@ -163,12 +163,11 @@ var zoteroSearchConfig = {
     },
     onSelection: (feedback) => {
 
-        let citekey = '@' + feedback.selection.value.key;
         let quickCopy = document.querySelector("input#zotero-quick-copy-mode").checked;
 
         if(quickCopy){
             zoteroSearchInput.blur();
-            zoteroSearchInput.value = citekey;
+            zoteroSearchInput.value = '@' + feedback.selection.value.key;
             zoteroSearchInput.select();
             document.execCommand("copy");
             toggleZoteroSearchOverlay("hide");
@@ -1421,6 +1420,8 @@ function renderBP3Tag(string, modifier = ""){
 // Render the contents of the 'selected item' div
 // Called on item selection when Quick Copy is not enabled
 function renderSelectedItemInfo(feedback){
+
+    let citekey = '@' + feedback.selection.value.key;
     let itemYear = (feedback.selection.value.year) ? (" (" + feedback.selection.value.year + ")") : "";
 
     // Generate list of authors as bp3 tags or Roam page references
