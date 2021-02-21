@@ -162,68 +162,20 @@ var zoteroSearchConfig = {
             .appendChild(result);
     },
     onSelection: (feedback) => {
-        
-        zoteroSearchInput.blur();
-        zoteroSearchInput.value = '@' + feedback.selection.value.key;
-        zoteroSearchInput.select();
-        document.execCommand("copy");
-        zoteroSearchInput.blur();
 
-        let citekey = "@" + feedback.selection.value.key;
-        let itemYear = (feedback.selection.value.year) ? (" (" + feedback.selection.value.year + ")") : "";
+        let citekey = '@' + feedback.selection.value.key;
+        let quickCopy = document.querySelector("input#zotero-quick-copy-mode").checked;
 
-        // Generate list of authors as bp3 tags or Roam page references
-        let infoAuthors = feedback.selection.value.authorsFull;
-        let divAuthors = "";
-        if(infoAuthors.length > 0){
-            for(i=0; i < infoAuthors.length; i++){
-                let authorInGraph = lookForPage(title = infoAuthors[i]);
-                let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i], modifier = "bp3-intent-primary bp3-round");
-                divAuthors = divAuthors + authorElem;
-                if(i < infoAuthors.length - 2){
-                    divAuthors = divAuthors + ", ";
-                } else if(i == infoAuthors.length - 2){
-                    divAuthors = divAuthors + " & ";
-                }
-            }
-        } 
-
-        // Generate list of tags as bp3 tags or Roam tags
-        let infoTags = feedback.selection.value.tags;
-        let divTags = "";
-        if(infoTags.length > 0){
-            divTags = `<p>`;
-            for(i=0; i < infoTags.length; i++){
-                let tagInGraph = lookForPage(title = infoTags[i]);
-                let tagElem = (tagInGraph.present == true) ? renderPageTag(title = infoTags[i]) : renderBP3Tag(string = infoTags[i]);
-                divTags = divTags + tagElem + " ";
-            }
-            divTags = divTags + `</p>`;
-        } 
-        
-        // Render the metadata section
-        let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
-        metadataDiv.innerHTML = `<h4>${feedback.selection.value.title}${itemYear}</h4>
-                                <p>${divAuthors}${feedback.selection.value.meta}</p>
-                                <p>${feedback.selection.value.abstract}</p>
-                                <p>${divTags}</p>`;
-
-        // Render the graph info section
-        let graphInfoDiv = document.querySelector(".zotero-search-selected-item-graph-info");
-        let pageInGraph = lookForPage(citekey);
-        let pageUID = (pageInGraph.uid) ? pageInGraph.uid : "";
-        let iconName = (pageInGraph.present == true) ? "tick" : "cross";
-        let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
-        let itemInfo = (pageInGraph.present == true) ? (`Page already exists in the graph : ` + renderPageReference(title = citekey, uid = pageUID)) : "Page doesn't exist in the graph";
-
-        graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span><span> ${itemInfo}</span></div>
-                            <div><span class="bp3-icon-add bp3-icon"></span><a class="zotero-search-import-item"> Import metadata into Roam</a></div>`;
-        
-        document.getElementById("zotero-search-selected-item").querySelector("a.zotero-search-import-item").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
-
-        let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
-        selectedItemDiv.style.display = "block";
-        
+        if(quickCopy){
+            zoteroSearchInput.blur();
+            zoteroSearchInput.value = citekey;
+            zoteroSearchInput.select();
+            document.execCommand("copy");
+            toggleZoteroSearchOverlay("hide");
+        } else {
+            zoteroSearchInput.blur();
+            renderSelectedItemInfo(feedback);
+        }
     }
 };
 
@@ -1149,7 +1101,8 @@ function createZoteroSearchOverlay(){
     searchDialogFooter.classList.add("bp3-dialog-footer");
 
     // Add header elements
-    searchDialogHeader.innerHTML = `<h4 class="bp3-heading">Zotero Search</h4>
+    searchDialogHeader.innerHTML = `<label class="bp3-control bp3-switch" style="margin-bottom:0px;flex: 1 1 auto;">
+                                    <input id="zotero-quick-copy-mode" type="checkbox"><span class="bp3-control-indicator"></span>Quick Copy</label>
                                     <span style="font-style:italic;">Press Esc or Alt-Q to exit</span>
                                     <button type="button" aria-label="Close" class="zotero-search-close bp3-button bp3-minimal bp3-dialog-close-button">
                                     <span icon="small-cross" class="bp3-icon bp3-icon-small-cross"><svg data-icon="small-cross" width="20" height="20" viewBox="0 0 20 20"><desc>small-cross</desc><path d="M11.41 10l3.29-3.29c.19-.18.3-.43.3-.71a1.003 1.003 0 00-1.71-.71L10 8.59l-3.29-3.3a1.003 1.003 0 00-1.42 1.42L8.59 10 5.3 13.29c-.19.18-.3.43-.3.71a1.003 1.003 0 001.71.71l3.29-3.3 3.29 3.29c.18.19.43.3.71.3a1.003 1.003 0 00.71-1.71L11.41 10z" fill-rule="evenodd"></path></svg></span></button>`
@@ -1463,4 +1416,62 @@ function renderPageTag(title){
 // Return HTML code for a BP3 tag (minimal)
 function renderBP3Tag(string, modifier = ""){
     return `<span class="bp3-tag bp3-minimal ${modifier}" style="margin:5px;">${string}</span>`;
+}
+
+// Render the contents of the 'selected item' div
+// Called on item selection when Quick Copy is not enabled
+renderSelectedItemInfo(feedback){
+    let itemYear = (feedback.selection.value.year) ? (" (" + feedback.selection.value.year + ")") : "";
+
+        // Generate list of authors as bp3 tags or Roam page references
+        let infoAuthors = feedback.selection.value.authorsFull;
+        let divAuthors = "";
+        if(infoAuthors.length > 0){
+            for(i=0; i < infoAuthors.length; i++){
+                let authorInGraph = lookForPage(title = infoAuthors[i]);
+                let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i], modifier = "bp3-intent-primary bp3-round");
+                divAuthors = divAuthors + authorElem;
+                if(i < infoAuthors.length - 2){
+                    divAuthors = divAuthors + ", ";
+                } else if(i == infoAuthors.length - 2){
+                    divAuthors = divAuthors + " & ";
+                }
+            }
+        } 
+
+        // Generate list of tags as bp3 tags or Roam tags
+        let infoTags = feedback.selection.value.tags;
+        let divTags = "";
+        if(infoTags.length > 0){
+            divTags = `<p>`;
+            for(i=0; i < infoTags.length; i++){
+                let tagInGraph = lookForPage(title = infoTags[i]);
+                let tagElem = (tagInGraph.present == true) ? renderPageTag(title = infoTags[i]) : renderBP3Tag(string = infoTags[i]);
+                divTags = divTags + tagElem + " ";
+            }
+            divTags = divTags + `</p>`;
+        } 
+        
+        // Render the metadata section
+        let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
+        metadataDiv.innerHTML = `<h4>${feedback.selection.value.title}${itemYear}</h4>
+                                <p>${divAuthors}${feedback.selection.value.meta}</p>
+                                <p>${feedback.selection.value.abstract}</p>
+                                <p>${divTags}</p>`;
+
+        // Render the graph info section
+        let graphInfoDiv = document.querySelector(".zotero-search-selected-item-graph-info");
+        let pageInGraph = lookForPage(citekey);
+        let pageUID = (pageInGraph.uid) ? pageInGraph.uid : "";
+        let iconName = (pageInGraph.present == true) ? "tick" : "cross";
+        let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
+        let itemInfo = (pageInGraph.present == true) ? (`Page already exists in the graph : ` + renderPageReference(title = citekey, uid = pageUID)) : "Page doesn't exist in the graph";
+
+        graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span><span> ${itemInfo}</span></div>
+                            <div><span class="bp3-icon-add bp3-icon"></span><a class="zotero-search-import-item"> Import metadata into Roam</a></div>`;
+        
+        document.getElementById("zotero-search-selected-item").querySelector("a.zotero-search-import-item").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
+
+        let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
+        selectedItemDiv.style.display = "block";
 }
