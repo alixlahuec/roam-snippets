@@ -1420,58 +1420,57 @@ function renderBP3Tag(string, modifier = ""){
 
 // Render the contents of the 'selected item' div
 // Called on item selection when Quick Copy is not enabled
-renderSelectedItemInfo(feedback){
+function renderSelectedItemInfo(feedback){
     let itemYear = (feedback.selection.value.year) ? (" (" + feedback.selection.value.year + ")") : "";
 
-        // Generate list of authors as bp3 tags or Roam page references
-        let infoAuthors = feedback.selection.value.authorsFull;
-        let divAuthors = "";
-        if(infoAuthors.length > 0){
-            for(i=0; i < infoAuthors.length; i++){
-                let authorInGraph = lookForPage(title = infoAuthors[i]);
-                let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i], modifier = "bp3-intent-primary bp3-round");
-                divAuthors = divAuthors + authorElem;
-                if(i < infoAuthors.length - 2){
-                    divAuthors = divAuthors + ", ";
-                } else if(i == infoAuthors.length - 2){
-                    divAuthors = divAuthors + " & ";
-                }
+    // Generate list of authors as bp3 tags or Roam page references
+    let infoAuthors = feedback.selection.value.authorsFull;
+    let divAuthors = "";
+    if(infoAuthors.length > 0){
+        for(i=0; i < infoAuthors.length; i++){
+            let authorInGraph = lookForPage(title = infoAuthors[i]);
+            let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i], modifier = "bp3-intent-primary bp3-round");
+            divAuthors = divAuthors + authorElem;
+            if(i < infoAuthors.length - 2){
+                divAuthors = divAuthors + ", ";
+            } else if(i == infoAuthors.length - 2){
+                divAuthors = divAuthors + " & ";
             }
-        } 
+        }
+    } 
 
-        // Generate list of tags as bp3 tags or Roam tags
-        let infoTags = feedback.selection.value.tags;
-        let divTags = "";
-        if(infoTags.length > 0){
-            divTags = `<p>`;
-            for(i=0; i < infoTags.length; i++){
-                let tagInGraph = lookForPage(title = infoTags[i]);
-                let tagElem = (tagInGraph.present == true) ? renderPageTag(title = infoTags[i]) : renderBP3Tag(string = infoTags[i]);
-                divTags = divTags + tagElem + " ";
-            }
-            divTags = divTags + `</p>`;
-        } 
-        
-        // Render the metadata section
-        let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
-        metadataDiv.innerHTML = `<h4>${feedback.selection.value.title}${itemYear}</h4>
-                                <p>${divAuthors}${feedback.selection.value.meta}</p>
-                                <p>${feedback.selection.value.abstract}</p>
-                                <p>${divTags}</p>`;
+    // Generate list of tags as bp3 tags or Roam tags
+    let infoTags = feedback.selection.value.tags;
+    let divTags = "";
+    if(infoTags.length > 0){
+        for(i=0; i < infoTags.length; i++){
+            let tagInGraph = lookForPage(title = infoTags[i]);
+            let tagElem = (tagInGraph.present == true) ? renderPageTag(title = infoTags[i]) : renderBP3Tag(string = infoTags[i]);
+            divTags = divTags + tagElem + " ";
+        }
+    } 
+    
+    // Render the metadata section
+    let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
+    metadataDiv.innerHTML = `<h4>${feedback.selection.value.title}${itemYear}</h4>
+                            <p>${divAuthors}${feedback.selection.value.meta}</p>
+                            <p>${feedback.selection.value.abstract}</p>
+                            <p>${divTags}</p>`;
 
-        // Render the graph info section
-        let graphInfoDiv = document.querySelector(".zotero-search-selected-item-graph-info");
-        let pageInGraph = lookForPage(citekey);
-        let pageUID = (pageInGraph.uid) ? pageInGraph.uid : "";
-        let iconName = (pageInGraph.present == true) ? "tick" : "cross";
-        let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
-        let itemInfo = (pageInGraph.present == true) ? (`Page already exists in the graph : ` + renderPageReference(title = citekey, uid = pageUID)) : "Page doesn't exist in the graph";
+    // Render the graph info section
+    let graphInfoDiv = document.querySelector(".zotero-search-selected-item-graph-info");
+    let pageInGraph = lookForPage(citekey);
+    let pageUID = (pageInGraph.uid) ? pageInGraph.uid : "";
+    let iconName = (pageInGraph.present == true) ? "tick" : "cross";
+    let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
+    let itemInfo = (pageInGraph.present == true) ? (`Page already exists in the graph : ` + renderPageReference(title = citekey, uid = pageUID)) : "Page doesn't exist in the graph";
 
-        graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span><span> ${itemInfo}</span></div>
-                            <div><span class="bp3-icon-add bp3-icon"></span><a class="zotero-search-import-item"> Import metadata into Roam</a></div>`;
-        
-        document.getElementById("zotero-search-selected-item").querySelector("a.zotero-search-import-item").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
+    graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span><span> ${itemInfo}</span></div>
+                        <div><span class="bp3-icon-add bp3-icon"></span><a class="zotero-search-import-item"> Import metadata into Roam</a></div>`;
+    
+    document.getElementById("zotero-search-selected-item").querySelector("a.zotero-search-import-item").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
 
-        let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
-        selectedItemDiv.style.display = "block";
+    // Finally, make the div visible
+    let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
+    selectedItemDiv.style.display = "block";
 }
