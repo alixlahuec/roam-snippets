@@ -1406,7 +1406,7 @@ async function waitForPageUID(page_title) {
         } while (tries < 50 && !found);
         // If after 50 attempts there still isn't a match, throw an error
         console.log(pageUID);
-        throw new error('The page couldn\'t be found');
+        throw new Error('The page couldn\'t be found');
     } catch (e) {
         console.error(e);
     }
