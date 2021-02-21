@@ -1206,8 +1206,10 @@ function setupZoteroSearchClose(){
     })
 }
 
+// Clear selection rendering on input/focus on the search bar (same events that trigger the autoComplete engine)
 function setupClearingSelectedItemDiv(){
     zoteroSearchInput.addEventListener("input", clearSelectedItemDiv);
+    zoteroSearchInput.addEventListener("focus", clearSelectedItemDiv);
 }
 
 function clearSelectedItemDiv(){
@@ -1337,6 +1339,14 @@ async function addSearchResult(title, uid){
             let pageUID = await waitForPageUID(title);
             if(pageUID != null){
                 await addMetadataArray(page_uid = pageUID, arr = itemData);
+                let checkSuccess = lookForPage(title);
+                if(checkSuccess.present){
+                    let nbChildren = roamAlphaAPI.q("[:find (count ?chld) :in $ ?title :where[?p :block/uid ?uid][?p :block/children ?chld]]", checkSuccess.uid);
+                    alert(`Page was successfully added to the graph.
+                    It currently has ${nbChildren} child blocks.`);
+                } else {
+                    alert(`Something went wrong in creating the page`);
+                }
             } else {
                 console.log(pageUID);
                 throw new Error("There was a problem in obtaining the page's UID.");
