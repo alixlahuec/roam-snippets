@@ -80,7 +80,7 @@ var zoteroSearchConfig = {
                 return simplifyDataArray(ZoteroData);
             }
         },
-        key: ['title', 'authorsFull', 'year', 'tagsString'],
+        key: ['title', 'authorsLastNames', 'year', 'tagsString'],
         cache: false,
         results: (list) => {
             // Make sure to return only one result per item in the dataset, by gathering all indices & returning only the first match for that index
@@ -127,7 +127,7 @@ var zoteroSearchConfig = {
             let itemAuthors = "";
             if(data.value.authors){
                 // If the match is in the full list of authors, manually add the .autoComplete_highlighted class to the abbreviated authors span
-                if(data.key == "authorsFull"){
+                if(data.key == "authorsLastNames"){
                     itemAuthors = `<span class="zotero-search-item-authors autoComplete_highlighted">${data.value.authors}</span>`;
                 } else {
                     itemAuthors = `<span class="zotero-search-item-authors">${data.value.authors}</span>`;
@@ -1282,10 +1282,14 @@ function simplifyDataArray(arr){
             tagsString = tagsArray.map(i => "#"+i).filter(Boolean).join(", ");
         }
 
-        // Store full authors list as array
+        // Process creators data (abbreviated display ; list of roles ; list of last names only)
         let authorsArray = [];
+        let authorsRolesArray = [];
+        let authorsLastNamesArray = [];
         if(item.data.creators.length > 0){
             authorsArray = item.data.creators.map(i => [i.firstName, i.lastName].filter(Boolean).join(" "));
+            authorsRolesArray = item.data.creators.map(i => i.creatorType);
+            authorsLastNamesArray = item.data.creators.map(i => i.lastName);
         }
 
         // Get abstract if available
@@ -1301,6 +1305,8 @@ function simplifyDataArray(arr){
             meta: metadataString,
             tags: tagsArray,
             authorsFull: authorsArray,
+            authorsRoles: authorsRolesArray,
+            authorsLastNames: authorsLastNamesArray,
             tagsString: tagsString
         }
     })
@@ -1441,12 +1447,14 @@ function renderSelectedItemInfo(feedback){
 
     // Generate list of authors as bp3 tags or Roam page references
     let infoAuthors = feedback.selection.value.authorsFull;
+    let infoRolesAuthors = feedback.selection.value.authorsRoles;
     let divAuthors = "";
     if(infoAuthors.length > 0){
         for(i=0; i < infoAuthors.length; i++){
             let authorInGraph = lookForPage(title = infoAuthors[i]);
             let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i], modifier = "bp3-intent-primary bp3-round");
-            divAuthors = divAuthors + authorElem;
+            let authorRole = (infoRolesAuthors[i] && infoRolesAuthors != "author") ? (" (" + infoRolesAuthors[i] + ")") : "";
+            divAuthors = divAuthors + authorElem + authorRole;
             if(i < infoAuthors.length - 2){
                 divAuthors = divAuthors + ", ";
             } else if(i == infoAuthors.length - 2){
