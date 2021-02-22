@@ -90,6 +90,9 @@ var zoteroSearchConfig = {
     },
     selector: '#zotero-search-autocomplete',
     searchEngine: 'strict',
+    trigger: {
+        event: ["input", "focus"]
+    },
     highlight: true,
     maxResults: 20,
     sort: (a, b) => { // Sort by author, alphabetically
