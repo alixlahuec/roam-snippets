@@ -1453,7 +1453,7 @@ function renderSelectedItemInfo(feedback){
         for(i=0; i < infoAuthors.length; i++){
             let authorInGraph = lookForPage(title = infoAuthors[i]);
             let authorElem = (authorInGraph.present == true) ? renderPageReference(title = infoAuthors[i], uid = authorInGraph.uid) : renderBP3Tag(string = infoAuthors[i], modifier = "bp3-intent-primary bp3-round");
-            let authorRole = (infoRolesAuthors[i] && infoRolesAuthors != "author") ? (" (" + infoRolesAuthors[i] + ")") : "";
+            let authorRole = (infoRolesAuthors[i] && infoRolesAuthors[i] != "author") ? (" (" + infoRolesAuthors[i] + ")") : "";
             divAuthors = divAuthors + authorElem + authorRole;
             if(i < infoAuthors.length - 2){
                 divAuthors = divAuthors + ", ";
