@@ -1416,7 +1416,7 @@ function addAutoCompleteCSS(){
                                     .item-basic-metadata, .item-additional-metadata{flex: 0 1 60%;}
                                     .item-citekey, .item-actions{flex:0 1 30%;}
                                     .item-citekey{margin:10px 0px;}
-                                    .item-citekey input{box-shadow:none;font-weight:bold;}`;
+                                    .item-citekey input.bp3-input[readonly]{box-shadow:none;font-weight:bold;}`;
     document.head.append(autoCompleteCSS);
 }
 
@@ -1485,7 +1485,7 @@ function renderSelectedItemInfo(feedback){
                                 </div>
                             <div class="item-citekey">
                                 <div class="bp3-control-group">
-                                    <div class="bp3-input-group bp3-fill"><input type="text" class="bp3-input" value="${citekey}"></div>
+                                    <div class="bp3-input-group bp3-fill"><input type="text" class="bp3-input" value="${citekey}" readonly></div>
                                     <button type="button" class="bp3-button item-copy-citekey"><span icon="clipboard" class="bp3-icon bp3-icon-clipboard"></span></button>
                                 </div>
                             </div>`;
