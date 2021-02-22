@@ -1124,14 +1124,12 @@ function createZoteroSearchOverlay(){
     let selectedItemDiv = document.createElement('div');
     selectedItemDiv.id = "zotero-search-selected-item";
     selectedItemDiv.classList.add("bp3-card");
-    selectedItemDiv.style = "width:80%;margin:0 auto;display:none;";
+    selectedItemDiv.style = "width:90%;margin:0 auto;display:none;";
 
     let selectedItemMetadata = document.createElement('div');
-    selectedItemMetadata.classList.add("zotero-search-selected-item-metadata");
-    selectedItemMetadata.style = "padding: 10px 20px;";
+    selectedItemMetadata.classList.add("selected-item-header");
     let selectedItemGraphInfo = document.createElement('div');
-    selectedItemGraphInfo.classList.add("zotero-search-selected-item-graph-info");
-    selectedItemGraphInfo.classList.add("bp3-card");
+    selectedItemGraphInfo.classList.add("selected-item-body");
 
     selectedItemDiv.appendChild(selectedItemMetadata);
     selectedItemDiv.appendChild(selectedItemGraphInfo);
@@ -1405,7 +1403,8 @@ function addAutoCompleteCSS(){
     let autoCompleteCSS = document.createElement('style');
     autoCompleteCSS.textContent = `li.autoComplete_selected{background-color:#e7f3f7;}
                                     span.autoComplete_highlighted{color:#146cb7;}
-                                    .zotero-search-selected-item-metadata`;
+                                    .selected-item-header, .selected-item-body{display:flex;}
+                                    .item-citekey, .item-actions{flex:1 0 30%;}`;
     document.head.append(autoCompleteCSS);
 }
 
@@ -1459,27 +1458,46 @@ function renderSelectedItemInfo(feedback){
             let tagElem = (tagInGraph.present == true) ? renderPageTag(title = infoTags[i]) : renderBP3Tag(string = infoTags[i]);
             divTags = divTags + tagElem + " ";
         }
-    } 
+    }
+
+    // Information about the item
+    let pageInGraph = lookForPage(citekey);
     
-    // Render the metadata section
-    let metadataDiv = document.getElementById("zotero-search-selected-item").querySelector(".zotero-search-selected-item-metadata");
-    metadataDiv.innerHTML = `<h4>${feedback.selection.value.title}${itemYear}</h4>
-                            <p>${divAuthors}${feedback.selection.value.meta}</p>
-                            <p>${feedback.selection.value.abstract}</p>
-                            <p>${divTags}</p>`;
+    // Render the header section
+    let headerDiv = document.querySelector(".selected-item-header");
+    headerDiv.innerHTML = `<h4 class="item-title">${feedback.selection.value.title}${itemYear}</h4>
+                            <div class="item-citekey">
+                                <div class="bp3-control-group">
+                                <div class="bp3-input-group bp3-fill"><input type="text" class="bp3-input" value="${citekey}"></div>
+                                <button type="button" class="bp3-button item-copy-citekey"><span icon="clipboard" class="bp3-icon bp3-icon-clipboard"></span></button>
+                                </div>
+                            </div>`;
 
     // Render the graph info section
-    let graphInfoDiv = document.querySelector(".zotero-search-selected-item-graph-info");
-    let pageInGraph = lookForPage(citekey);
+    let bodyDiv = document.querySelector(".selected-item-body");
     let pageUID = (pageInGraph.uid) ? pageInGraph.uid : "";
     let iconName = (pageInGraph.present == true) ? "tick" : "cross";
     let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
-    let itemInfo = (pageInGraph.present == true) ? (`Page already exists in the graph : ` + renderPageReference(title = citekey, uid = pageUID)) : "Page doesn't exist in the graph";
+    let itemInfo = (pageInGraph.present == true) ? (`Page already exists in the graph`) : "Page doesn't exist in the graph";
 
-    graphInfoDiv.innerHTML = `<div><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span><span> ${itemInfo}</span></div>
-                        <div><span class="bp3-icon-add bp3-icon"></span><a class="zotero-search-import-item"> Import metadata into Roam</a></div>`;
+    bodyDiv.innerHTML = `<div class="item-metadata">
+                            <p>${divAuthors}${feedback.selection.value.meta}</p>
+                            <p>${feedback.selection.value.abstract}</p>
+                            <p>${divTags}</p>
+                        </div>
+                        <div class="item-actions">
+                            <div style="padding:5px 10px;font-style:italic;"><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span><span> ${itemInfo}</span></div>
+                            <div class="bp3-button-group bp3-minimal bp3-vertical bp3-align-left">
+                            <button type="button" class="bp3-button item-add-metadata">
+                                <span icon="add" class="bp3-icon bp3-icon-add bp3-intent-primary"></span>
+                                <span class="bp3-button-text">Import metadata</span>
+                            </button>
+                            </div>
+                        </div>`;
     
-    document.getElementById("zotero-search-selected-item").querySelector("a.zotero-search-import-item").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
+    // Add event listeners to action buttons
+    document.querySelector("button.item-add-metadata").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
+    document.querySelector("button.item-copy-citekey").addEventListener("click", function(){document.querySelector(".item-citekey input").select(); document.execCommand("copy");})
 
     // Finally, make the div visible
     let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
