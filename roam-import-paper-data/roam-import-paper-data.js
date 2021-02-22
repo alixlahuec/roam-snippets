@@ -1124,7 +1124,7 @@ function createZoteroSearchOverlay(){
     let selectedItemDiv = document.createElement('div');
     selectedItemDiv.id = "zotero-search-selected-item";
     selectedItemDiv.classList.add("bp3-card");
-    selectedItemDiv.style = "width:90%;margin:0 auto;display:none;";
+    selectedItemDiv.style = "width:95%;margin:0 auto;display:none;";
 
     let selectedItemMetadata = document.createElement('div');
     selectedItemMetadata.classList.add("selected-item-header");
@@ -1403,8 +1403,11 @@ function addAutoCompleteCSS(){
     let autoCompleteCSS = document.createElement('style');
     autoCompleteCSS.textContent = `li.autoComplete_selected{background-color:#e7f3f7;}
                                     span.autoComplete_highlighted{color:#146cb7;}
-                                    .selected-item-header, .selected-item-body{display:flex;}
-                                    .item-citekey, .item-actions{flex:1 0 30%;}`;
+                                    .selected-item-header, .selected-item-body{display:flex;justify-content:space-around;}
+                                    .item-basic-metadata, .item-additional-metadata{flex: 0 1 60%;}
+                                    .item-citekey, .item-actions{flex:0 1 30%;}
+                                    .item-citekey{margin:10px 0px;}
+                                    .item-citekey input{box-shadow:none;font-weight:bold;}`;
     document.head.append(autoCompleteCSS);
 }
 
@@ -1465,11 +1468,14 @@ function renderSelectedItemInfo(feedback){
     
     // Render the header section
     let headerDiv = document.querySelector(".selected-item-header");
-    headerDiv.innerHTML = `<h4 class="item-title">${feedback.selection.value.title}${itemYear}</h4>
+    headerDiv.innerHTML = `<div class="item-basic-metadata">
+                                <h4 class="item-title">${feedback.selection.value.title}${itemYear}</h4>
+                                <p class="item-metadata-string">${divAuthors}${feedback.selection.value.meta}</p>
+                                </div>
                             <div class="item-citekey">
                                 <div class="bp3-control-group">
-                                <div class="bp3-input-group bp3-fill"><input type="text" class="bp3-input" value="${citekey}"></div>
-                                <button type="button" class="bp3-button item-copy-citekey"><span icon="clipboard" class="bp3-icon bp3-icon-clipboard"></span></button>
+                                    <div class="bp3-input-group bp3-fill"><input type="text" class="bp3-input" value="${citekey}"></div>
+                                    <button type="button" class="bp3-button item-copy-citekey"><span icon="clipboard" class="bp3-icon bp3-icon-clipboard"></span></button>
                                 </div>
                             </div>`;
 
@@ -1480,10 +1486,9 @@ function renderSelectedItemInfo(feedback){
     let iconIntent = (pageInGraph.present == true) ? "success" : "danger";
     let itemInfo = (pageInGraph.present == true) ? (`Page already exists in the graph`) : "Page doesn't exist in the graph";
 
-    bodyDiv.innerHTML = `<div class="item-metadata">
-                            <p>${divAuthors}${feedback.selection.value.meta}</p>
-                            <p>${feedback.selection.value.abstract}</p>
-                            <p>${divTags}</p>
+    bodyDiv.innerHTML = `<div class="item-additional-metadata">
+                            <p class="item-abstract">${feedback.selection.value.abstract}</p>
+                            <p class="item-tags">${divTags}</p>
                         </div>
                         <div class="item-actions">
                             <div style="padding:5px 10px;font-style:italic;"><span class="bp3-icon-${iconName} bp3-icon bp3-intent-${iconIntent}"></span><span> ${itemInfo}</span></div>
