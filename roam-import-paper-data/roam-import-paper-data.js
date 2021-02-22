@@ -1513,7 +1513,7 @@ function renderSelectedItemInfo(feedback){
     
     // Add event listeners to action buttons
     document.querySelector("button.item-add-metadata").addEventListener("click", function(){addSearchResult(citekey, pageUID)});
-    document.querySelector("button.item-copy-citekey").addEventListener("click", function(){document.querySelector(".item-citekey input").select(); document.execCommand("copy");})
+    document.querySelector("button.item-copy-citekey").addEventListener("click", function(){document.querySelector(".item-citekey input").select(); document.execCommand("copy");document.querySelector(".item-citekey input").blur();})
 
     // Finally, make the div visible
     let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
