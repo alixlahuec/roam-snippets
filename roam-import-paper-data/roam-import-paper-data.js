@@ -916,7 +916,6 @@ async function addMetadataArray(page_uid, arr){
 
 async function addBlockObject(parent_uid, object) {
     // If the Object doesn't have a string property, throw an error
-    // TODO: Add note in documentation that `string` cannot be left out
     if(typeof(object.string) === 'undefined'){
         console.log(object);
         throw new Error('All blocks passed as an Object must have a string property');
@@ -1348,7 +1347,7 @@ async function addSearchResult(title, uid){
                 await addMetadataArray(page_uid = pageUID, arr = itemData);
                 let checkSuccess = lookForPage(title);
                 if(checkSuccess.present){
-                    let nbChildren = roamAlphaAPI.q("[:find (count ?chld) :in $ ?title :where[?p :block/uid ?uid][?p :block/children ?chld]]", checkSuccess.uid);
+                    let nbChildren = roamAlphaAPI.q("[:find (count ?chld) :in $ ?uid :where[?p :block/uid ?uid][?p :block/children ?chld]]", checkSuccess.uid)[0][0];
                     alert(`Page was successfully added to the graph.
                     It currently has ${nbChildren} child blocks.`);
                 } else {
@@ -1518,4 +1517,51 @@ function renderSelectedItemInfo(feedback){
     // Finally, make the div visible
     let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
     selectedItemDiv.style.display = "block";
+}
+
+// SECTION FOR RENDERING METADATA PREVIEW (UPCOMING)
+
+function renderHTMLMetadataArray(arr){
+    let renderedHTML = `<ul>`;
+
+    arr.forEach(function(el,ind){
+        // If the element is an Object, pass it to renderHTMLBlockObject to recursively process its contents
+        if(el.constructor === Object){
+            renderedHTML = renderedHTML + renderHTMLBlockObject(el);
+        } else if(el.constructor === String) {
+            // If the element is a simple String, add the corresponding <li> & move on
+            renderedHTML = renderedHTML + `<li>${el} </li>`;
+        } else {
+            // If the element is of any other type, throw an error
+            alert("Some of the input was of the wrong type. See the console for more details");
+            console.log(el);
+            throw new Error('All array items should be of type String or Object');
+        }
+    });
+
+    renderedHTML = renderedHTML + `</ul>`;
+
+    return renderedHTML;
+}
+
+function renderHTMLBlockObject(object){
+    let objectHTML = "";
+    // If the Object doesn't have a string property, throw an error
+    if(typeof(object.string) === 'undefined'){
+        alert("Some of the input was passed as an Object but without a string property. See console for more details");
+        console.log(object);
+        throw new Error('All blocks passed as an Object must have a string property');
+    } else {
+        // Otherwise add the opening <li>
+        objectHTML = objectHTML + `<li>${object.string}`;
+        // If the Object has a `children` property
+        if(typeof(object.children) !== 'undefined'){
+            if(object.children.length > 0){
+                objectHTML = objectHTML + renderHTMLMetadataArray(object.children);
+            }
+        }
+        objectHTML = objectHTML + ` </li>`;
+    }
+
+    return objectHTML;
 }
