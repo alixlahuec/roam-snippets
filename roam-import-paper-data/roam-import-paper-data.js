@@ -235,13 +235,13 @@ function findRefCitekeys(refs) {
 // TODO: Check if the do/while structure could be improved here
 function runZoteroDataGetter() {
     refCitekeyFound = false;
-    setTimeout(function () {
+    setTimeout(function(){
         do {
             let refs = document.getElementsByClassName("rm-page-ref");
             refCitekeyFound = findRefCitekeys(refs);
         } while (refCitekeyFound == true);
-    }, 1000);
-    checkCitekeys();
+    }, 300);
+    checkCitekeys(update = true);
     addZoteroContextMenuListener();
 }
 
