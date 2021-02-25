@@ -1410,7 +1410,8 @@ function disableZoteroSearchOpenShortcut(){
 // Add CSS styling for item navigation + match highlight + selection display
 function addAutoCompleteCSS(){
     let autoCompleteCSS = document.createElement('style');
-    autoCompleteCSS.textContent = `li.autoComplete_selected{background-color:#e7f3f7;}
+    autoCompleteCSS.textContent = `ul#zotero-search-results-list::before{content:attr(aria-label);}
+                                    li.autoComplete_selected{background-color:#e7f3f7;}
                                     span.autoComplete_highlighted{color:#146cb7;}
                                     .selected-item-header, .selected-item-body{display:flex;justify-content:space-around;}
                                     .item-basic-metadata, .item-additional-metadata{flex: 0 1 60%;}
@@ -1525,12 +1526,11 @@ function addListenerNbResults(){
 }
 
 function renderNbResults(e){
+    let resultsText = "";
     if(e.detail.results.length > 0){
-        let nbResultsDiv = document.createElement("li");
-        nbResultsDiv.classList.add("zotero-search-nb-results");
-        nbResultsDiv.innerHTML = `Showing <strong>${e.detail.results.length}</strong> out of <strong>${e.detail.matches.length}</strong> results`;
-        document.querySelector("#zotero-search-results-list").insertBefore(nbResultsDiv, document.querySelector("#zotero-search_result_0"));
+        resultsText = `Showing ${e.detail.results.length} out of ${e.detail.matches.length} results`;
     }
+    document.querySelector("#zotero-search-results-list").setAttribute("aria-label", resultsText);
 }
 
 // SECTION FOR RENDERING METADATA PREVIEW (UPCOMING)
