@@ -104,7 +104,7 @@ var zoteroSearchConfig = {
         className: "zotero-search-results-list",
         idName: "zotero-search-results-list",
         container: source => {
-            source.classList.add("bp3-menu")
+            source.classList.add("bp3-menu");
         }
     },
     resultItem: {
@@ -206,6 +206,7 @@ if (document.getElementById('zotero-data-icon') == null) {
 
     setupZoteroUpdateButton();
     setupZoteroSearchClose();
+    addListenerNbResults();
     addAutoCompleteCSS();
 }
 
@@ -1517,6 +1518,20 @@ function renderSelectedItemInfo(feedback){
     // Finally, make the div visible
     let selectedItemDiv = document.querySelector("#zotero-search-selected-item");
     selectedItemDiv.style.display = "block";
+}
+
+function addListenerNbResults(){
+    zoteroSearchInput.addEventListener("rendered", renderNbResults);
+}
+
+function renderNbResults(e){
+    if(e.detail.results.length > 0){
+        let displayedResults = (zoteroSearch.maxResults < e.detail.results.length) ? zoteroSearch.maxResults : e.detail.results.length;
+        let nbResultsDiv = document.createElement("li");
+        nbResultsDiv.classList.add("zotero-search-nb-results");
+        nbResultsDiv.innerHTML = `Showing <strong>${displayedResults}</strong> out of <strong>${e.detail.results.length}</strong> results`;
+        document.querySelector("#zotero-search-results-list").insertBefore(nbResultsDiv, document.querySelector("#zotero-search_result_0"));
+    }
 }
 
 // SECTION FOR RENDERING METADATA PREVIEW (UPCOMING)
