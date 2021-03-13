@@ -58,6 +58,13 @@ if (document.getElementById('zotero-data-icon') == null) {
     zoteroContextBackdrop = document.querySelector('.zotero-context-backdrop');
     zoteroContextMenuOptions = document.querySelectorAll('.zotero-context-menu-option');
     setupZoteroContextMenu();
+
+    setTimeout(function(){
+        let goToUpdateDocs = confirm("A new version of the zoteroRoam extension is available. Click 'OK' to be directed to the update documentation.");
+        if(goToUpdateDocs){
+            window.open("https://app.gitbook.com/@alix-lahuec/s/roam-zotero-data-importer/updating-from-older-versions");
+        }
+    }, 4000)
 }
 
 // FUNCTIONS
