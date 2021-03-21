@@ -74,7 +74,7 @@ function createOverlayDialog(){
             exportSettings.id = "roam-to-latex-export-settings";
             exportSettings.style = `display:flex;margin-bottom:20px;justify-content:space-between;align-items:center;flex-wrap:wrap;`;
             exportSettings.innerHTML = `
-            ${createSelect(id = "roam-to-latex-setting-document-class", values = ["book", "article", "report"], {divClass: "bp3-minimal", labels: ["Book", "Article", "Report"], selected: 0})}
+            ${createSelect(id = "roam-to-latex-setting-document-class", values = ["report", "article", "book"], {divClass: "bp3-minimal", labels: ["Report", "Article", "Book"], selected: 0})}
             <label class="bp3-label">
                 Written by
                 <input type="text" class="bp3-input" id="roam-to-latex-setting-authors" dir="auto" placeholder="Author(s)"/>
@@ -148,6 +148,12 @@ function addExportButton(){
             document.querySelector("#roam-to-latex-btn").addEventListener("click", function(){ toggleExportOverlay("show") });
         }
     }
+    clearExportElements();
+}
+
+function clearExportElements(){
+    document.querySelector("#roam-to-latex-export-contents").value = ``;
+    document.querySelector("#roam-to-latex-export-form input[type='submit']").disabled = true;
 }
 
 function toggleExportOverlay(command){
@@ -207,7 +213,7 @@ function convertBlocks(arr, {document_class = "book", numbered = true, start_hea
 
     blocks.forEach(block => {
         if(block.heading){
-            output = `${output}\n${makeHeader(block.string, {document_class: document_class, numbered: numbered, level: start_header})}\n`;
+            output = `${output}\n${makeHeader(block.string, {document_class: document_class, numbered: numbered, level: start_header})}`;
         } else{
             // If the block isn't a heading, should it be ignored ? Added as paragraph ? Forced as heading ? (maybe this could be a user setting...)
         }
@@ -215,7 +221,9 @@ function convertBlocks(arr, {document_class = "book", numbered = true, start_hea
             output = `${output}${convertBlocks(block.children, {numbered: numbered, start_header: start_header+1})}`;
         }
     });
-
+    if(output.slice(-2) == "\\\\"){
+        output = output.slice(start = 0, end = -2);
+    }
     return output;
 }
 
@@ -236,10 +244,10 @@ function makeHeader(string, {document_class = "book", numbered = true, level = 1
             cmd = "subsubsection";
             break;
         default:
-            return `{${string}}`;
+            return `${string}\\\\`;
     };
 
-    return `\\${cmd}${(!numbered) ? "*" : ""}{${string}}`;
+    return `\\${cmd}${(!numbered) ? "*" : ""}{${string}}\n`;
 }
 
 function parseChildrenArray(arr){
