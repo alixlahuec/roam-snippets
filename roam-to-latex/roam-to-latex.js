@@ -214,11 +214,16 @@ function convertBlocks(arr, {document_class = "book", numbered = true, start_hea
     blocks.forEach(block => {
         if(block.heading){
             output = `${output}\n${makeHeader(block.string, {document_class: document_class, numbered: numbered, level: start_header})}`;
+            if(block.children){
+                if(block['view-type'] == "document" || typeof(block['view-type']) == 'undefined'){
+                    output = `${output}${convertBlocks(block.children, {document_class: document_class, numbered: numbered, start_header: start_header+1})}`;
+                } else{
+                    output = `${output}${makeList(block.children, type = block['view-type'])}`;
+                }
+            }
         } else{
-            // If the block isn't a heading, should it be ignored ? Added as paragraph ? Forced as heading ? (maybe this could be a user setting...)
-        }
-        if(block.children){
-            output = `${output}${convertBlocks(block.children, {numbered: numbered, start_header: start_header+1})}`;
+            // If the block isn't a heading, stop using the header tree for recursion
+            output = `${output}${parseBlock(block)}`;
         }
     });
     if(output.slice(-2) == "\\\\"){
@@ -250,16 +255,28 @@ function makeHeader(string, {document_class = "book", numbered = true, level = 1
     return `\\${cmd}${(!numbered) ? "*" : ""}{${string}}\n`;
 }
 
-function parseChildrenArray(arr){
-    let orderedBlocks = arr.sort((a,b) => a.order < b.order ? -1 : 1);
-    let output = ``;
-    for(let i = 0; i < orderedBlocks.length; i++){
-        // Do stuff to process each top-level block, then return its formatted contents
-        // Then add each to output variable
+function makeList(elements, type){
+    let cmd = (type == "bulleted") ? "itemize" : "enumerate";
+    let blocks = elements.map(el => `\\item{${parseBlock(el)}}`);
+    return `\\begin{${cmd}}\n\t${blocks.join("\n")}\n\\end{${cmd}}`;
+}
+
+function parseBlock(block){
+    let output = `${block.string}`;
+    // Do stuff to process the children of a non-heading block
+    if(block.children){
+        let format = (block['view-type']) ? block['view-type'] : "bulleted";
+        switch(format){
+            case 'document':
+                output = `${output}\\\\\n${block.children.map(child => parseBlock(child)).join("\\\\")}`;
+                break;
+            case 'bulleted':
+            case 'numbered':
+                output = `${output}\\\\\n${makeList(block.children, type = format)}`;
+                break;
+        }
     }
-
     return output;
-
 }
 
 // UTILS ---
