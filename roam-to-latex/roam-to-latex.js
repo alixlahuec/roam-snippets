@@ -72,14 +72,24 @@ function createOverlayDialog(){
 
             let exportSettings = document.createElement('div');
             exportSettings.id = "roam-to-latex-export-settings";
+            exportSettings.style = `display:flex;margin-bottom:20px;justify-content:space-between;align-items:center;flex-wrap:wrap;`;
             exportSettings.innerHTML = `
             ${createSelect(id = "roam-to-latex-setting-document-class", values = ["book", "article", "report"], {divClass: "bp3-minimal", labels: ["Book", "Article", "Report"], selected: 0})}
-            <input type="text" class="bp3-input" id="roam-to-latex-setting-authors" dir="auto" placeholder="Author(s)"/>
-            <input type="text" class="bp3-input" id="roam-to-latex-setting-title" dir="auto" placeholder="Document Title" />
+            <label class="bp3-label">
+                Written by
+                <input type="text" class="bp3-input" id="roam-to-latex-setting-authors" dir="auto" placeholder="Author(s)"/>
+            </label>
+            <label class="bp3-label">
+                Title
+                <input type="text" class="bp3-input" id="roam-to-latex-setting-title" dir="auto" placeholder="Document Title" />
+            </label>
             ${createToggle(id = "roam-to-latex-setting-cover", text = "Include cover title")}
             ${createToggle(id = "roam-to-latex-setting-numbered", text = "Numbered headers")}
-            ${createSelect(id = "roam-to-latex-setting-start-header", values = ["1", "2", "3", "4"], {divClass: "bp3-minimal", selected: 0})}
-            <button type="button" id="roam-to-latex-export-trigger" class="bp3-button bp3-outlined bp3-intent-success"><span class="bp3-button-text">Export page contents</span></button>
+            <label class="bp3-label">
+                Start Header
+                ${createSelect(id = "roam-to-latex-setting-start-header", values = ["1", "2", "3", "4"], {divClass: "bp3-minimal", selected: 0})}
+            </label>
+            <button type="button" id="roam-to-latex-export-trigger" class="bp3-button bp3-outlined bp3-intent-success bp3-fill"><span class="bp3-button-text">Export page contents</span></button>
             `;
 
             let exportForm = document.createElement('form');
@@ -153,14 +163,12 @@ function toggleExportOverlay(command){
 
 function startExport(){
     // Get value of HTML form elements
-    let document_class = document.querySelector('#roam-to-latex-setting-document-class').value;
+    let document_class = document.querySelector('#roam-to-latex-setting-document-class select').value;
     let authors = document.querySelector('#roam-to-latex-setting-authors').value;
     let title = document.querySelector('#roam-to-latex-setting-title').value;
-    let numberedChecked = document.querySelector('#roam-to-latex-setting-numbered').value;
-    let numbered = (numberedChecked == "checked") ? true : false;
-    let coverChecked = document.querySelector('#roam-to-latex-setting-cover').value;
-    let cover = (coverChecked == "checked") ? true : false;
-    let start_header = Number(document.querySelector('#roam-to-latex-setting-start-header').value);
+    let numbered = document.querySelector('#roam-to-latex-setting-numbered').checked;
+    let cover = document.querySelector('#roam-to-latex-setting-cover').checked;
+    let start_header = Number(document.querySelector('#roam-to-latex-setting-start-header select').value);
 
     // TODO: stuff to show contents are being processed (e.g, static spinner)
 
@@ -249,19 +257,20 @@ function parseChildrenArray(arr){
 // UTILS ---
 function createToggle(id, text){
     return `
-    <label class="bp3-control bp3-switch" style="margin-bottom:0px;flex: 1 1 auto;">
+    <label class="bp3-control bp3-switch" style="margin-bottom:0px;">
     <input id="${id}" type="checkbox"><span class="bp3-control-indicator"></span>${text}</label>`;
 }
 
-function createSelect(id, values, {divClass = "", labels = values, selected = 0} = {}){
+function createSelect(id, values, {divClass = "", labels = values, selected = 0, selectID = ""} = {}){
     let selectDiv = document.createElement('div');
     selectDiv.id = id;
+    selectDiv.classList.add("bp3-select");
     if(divClass.length > 0){
         selectDiv.classList.add(divClass);
     }
     let optionsElements = values.map( (val, index) => `<option ${(selected == index) ? "selected" : ""} value="${val}">${labels[index]}</option>`).join("\n");
     selectDiv.innerHTML = `
-    <select>
+    <select id="${selectID}">
         ${optionsElements}
     </select>
     `;
