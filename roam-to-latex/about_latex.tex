@@ -1,0 +1,41 @@
+// ABOUT LATEX ------
+
+// Formatting elements
+\textbf{} // In Roam : **text**
+\textit{} // In Roam : __text__
+// TODO: How to handle nested/precedence ? Match as many characters as possible with a regex ?
+
+// Lists
+// Bulleted -- pretty easy I'd say, unless deep nesting
+\begin{itemize}
+    \item The item
+    \item The second item
+\end{itemize}
+// Numbered
+\begin{enumerate}
+    \item An item with nested children
+    \begin{enumerate}
+        \item Nested item 1
+        \item Nested item 2
+    \end{enumerate}
+    \item An item without nested children
+\end{enumerate}
+
+// Table -- now that one's involved
+// The content for each cell should probably be processed beforehand, then piped in
+\begin{tabular}{ l l l } // Specify alignment here for each column
+    Col 1     & Col 2     & Col 3  \\
+    Text      & Some text & Other text \\
+\end{tabular}
+
+// Careful about special characters
+// Gonna have to escape them
+
+// How about citations ? (bibtex)
+// According to roam2tex author, should be converted into \cite{} (see https://gist.github.com/sschuldenzucker/6ff5ce2e55d67da3f2c1afda365e0d6b)
+
+// Major differences with roam2tex I think :
+// - it seems based on a Markdown exported by Roam? Or some...text version ? So have to read line-by-line, e.g
+// - it can't handle block references because Roam doesn't export them
+// BUT since we're using the Roam alpha API, we can resolve block references/embeds if needed
+// We also get the block-by-block content outline, and info about headings etc.
