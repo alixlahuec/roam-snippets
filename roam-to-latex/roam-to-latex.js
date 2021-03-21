@@ -194,20 +194,20 @@ function createTEX(document_class = "book", {numbered = true, cover = true, star
     let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
 
     let body = ``;
-    body += convertBlocks(roamPage.children, {numbered: numbered, start_header: start_header});
+    body += convertBlocks(roamPage.children, {document_class: document_class, numbered: numbered, start_header: start_header});
 
     let footer = `\n\\end{document}`;
 
     return `${header}\n${body}\n${footer}`;
 }
 
-function convertBlocks(arr, {numbered = true, start_header = 1} = {}){
+function convertBlocks(arr, {document_class = "book", numbered = true, start_header = 1} = {}){
     let output = ``;
     let blocks = sortRoamBlocks(arr);
 
     blocks.forEach(block => {
         if(block.heading){
-            output = `${output}\n${makeHeader(block.string, {numbered: numbered, level: start_header})}\n`;
+            output = `${output}\n${makeHeader(block.string, {document_class: document_class, numbered: numbered, level: start_header})}\n`;
         } else{
             // If the block isn't a heading, should it be ignored ? Added as paragraph ? Forced as heading ? (maybe this could be a user setting...)
         }
