@@ -11,6 +11,7 @@
 // INITIALIZATION ------
 
 createOverlayDialog();
+setupExportOverlay();
 addExportButton();
 window.addEventListener("hashchange", addExportButton);
 
@@ -86,8 +87,9 @@ function createOverlayDialog(){
             exportForm.setAttribute('action', 'https://www.overleaf.com/docs');
             exportForm.setAttribute('method', 'POST');
             exportForm.setAttribute('target', '_blank');
+            exportForm.classList.add("bp3-fill");
             exportForm.innerHTML = `
-            <textarea name="snip" id="roam-to-latex-export-contents" class="bp3-input bp3-small"></textarea>
+            <textarea name="snip" id="roam-to-latex-export-contents" class="bp3-input bp3-small bp3-fill" style="min-height:400px;"></textarea>
             <input type="submit" value="Export to Overleaf" disabled>`;
             exportForm.style = "display:none;";
 
@@ -120,7 +122,7 @@ function createOverlayDialog(){
 
 function setupExportOverlay(){
     document.querySelector(".roam-to-latex-close").addEventListener("click", function(){ toggleExportOverlay("hide") });
-    document.querySelector("#roam-to-latex-export-trigger").addEventListener("click", createTEX);
+    document.querySelector("#roam-to-latex-export-trigger").addEventListener("click", startExport);
 }
 
 function addExportButton(){
@@ -132,8 +134,8 @@ function addExportButton(){
             exportButton.classList.add("bp3-button");
             exportButton.classList.add("bp3-small");
             exportButton.innerHTML = `<span class="bp3-button-text">Export to LaTeX</span>`;
-            titleElement.appendChild(exportButton);
-            document.querySelector("#roam-to-latex-btn").addEventListener("click", toggleExportOverlay);
+            titleElement.closest('div').appendChild(exportButton);
+            document.querySelector("#roam-to-latex-btn").addEventListener("click", function(){ toggleExportOverlay("show") });
         }
     }
 }
@@ -164,9 +166,13 @@ function startExport(){
 
     // Launch processing of page contents
     let texOutput = createTEX(document_class = document_class, {numbered: numbered, cover: cover, start_header: start_header, authors: authors, title: title});
+
+    // Display results, and enable action buttons
     let contentsArea = document.querySelector('#roam-to-latex-export-contents');
     contentsArea.value = texOutput;
-    contentsArea.style.display = "block";
+    
+    document.querySelector("#roam-to-latex-export-form input[type='submit']").removeAttribute('disabled');
+    document.querySelector("#roam-to-latex-export-form").style.display = "block";
 
     // TODO: stuff to enable the "Export to Overleaf", "Download as .tex" and "Copy to Clipboard" buttons
 }
@@ -177,14 +183,12 @@ function startExport(){
 function createTEX(document_class = "book", {numbered = true, cover = true, start_header = 1, authors = "", title = ""} = {}){
     let roamPage = window.roamAlphaAPI.q(`[:find [(pull ?e [ :node/title :block/string :block/children :block/order :block/heading :children/view-type :block/text-align {:block/children ...} ]) ...] :in $ ?ptitle :where [?e :node/title ?ptitle] ]`, document.title)[0];
 
-    let header = `
-    \\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
+    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
 
     let body = ``;
     body += convertBlocks(roamPage.children, {numbered: numbered, start_header: start_header});
 
-    let footer = `
-    \\end{document}`;
+    let footer = `\n\\end{document}`;
 
     return `${header}\n${body}\n${footer}`;
 }
@@ -195,12 +199,12 @@ function convertBlocks(arr, {numbered = true, start_header = 1} = {}){
 
     blocks.forEach(block => {
         if(block.heading){
-            output = `${output}\n${makeHeader(block.string, {numbered: numbered, level: start_header})}`;
+            output = `${output}\n${makeHeader(block.string, {numbered: numbered, level: start_header})}\n`;
         } else{
             // If the block isn't a heading, should it be ignored ? Added as paragraph ? Forced as heading ? (maybe this could be a user setting...)
         }
         if(block.children){
-            output = `${output}\n${convertBlocks(block.children, {numbered: numbered, start_header: start_header+1})}`;
+            output = `${output}${convertBlocks(block.children, {numbered: numbered, start_header: start_header+1})}`;
         }
     });
 
@@ -249,7 +253,7 @@ function createToggle(id, text){
     <input id="${id}" type="checkbox"><span class="bp3-control-indicator"></span>${text}</label>`;
 }
 
-function createSelect(id, values, {divClass = "", labels = options, selected = 0} = {}){
+function createSelect(id, values, {divClass = "", labels = values, selected = 0} = {}){
     let selectDiv = document.createElement('div');
     selectDiv.id = id;
     if(divClass.length > 0){
