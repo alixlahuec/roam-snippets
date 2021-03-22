@@ -379,6 +379,11 @@ function formatText(string){
     let pageAliasRegex = /\[(.+?)\]\(\[\[(.+?)\]\]\)/g;
     output = output.replaceAll(pageAliasRegex, `$1`);
 
+    // Page references
+    // Note: this will remove all instances of `[[` and `]]`, even if they're not page references.
+    let pageRefRegex = /(\[\[|\]\])/g;
+    output = output.replaceAll(pageRefRegex, "");
+
     // Alias links markup
     let aliasRegex = /\[(.+?)(\]\()(.+?)\)/g;
     output = output.replaceAll(aliasRegex, `\\href{$3}{$1}`);
