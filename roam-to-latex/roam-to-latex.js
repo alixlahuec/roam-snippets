@@ -394,13 +394,18 @@ function formatText(string){
 
     // ESCAPING SPECIAL CHARACTERS --------------
 
-    let spec_chars = ["&", "%", "#"];
+    let spec_chars = ["&", "%"];
     spec_chars.forEach(char => {
         let charRegex = new RegExp(`${char}`, "g");
         output = output.replaceAll(charRegex, "\\$&");
     });
 
     // FORMATTING ACTUAL TEXT -------------------
+
+    // Blockquote
+    if(output.charAt(0) == ">"){
+        output = `\\begin{quote}${output}\\end{quote}`;
+    }
 
     // Bold markup
     let boldRegex = /\*{2}([^\*]+?)\*{2}/g;
@@ -413,12 +418,13 @@ function formatText(string){
     output = output.replaceAll(highlightRegex, `\\hl{$1}`);
 
     // TODO:
-    // + actual LaTeX math
-    // + the =: thing ?
+    // + in-text LaTeX math ($$ to $)
+    // + the =: popup thing ?
     // + citations, of course
     // + tables
     // + iframe/video embed/pdf embed ?
     // + clean up calc/word-count/etc. ?
+    // + attributes ?
     // strikethrough : seems like this requires an external package, so leaving it aside for now
 
     return output;
