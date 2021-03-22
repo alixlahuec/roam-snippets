@@ -389,7 +389,7 @@ function formatText(string){
     output = output.replaceAll(aliasRegex, `\\href{$3}{$1}`);
 
     // Tags : will be removed
-    let tagRegex = /\#(.+?) /g;
+    let tagRegex = /\#(.+?)( |$)/g;
     output = output.replaceAll(tagRegex, "");
 
     // ESCAPING SPECIAL CHARACTERS --------------
@@ -404,7 +404,7 @@ function formatText(string){
 
     // Blockquote
     if(output.charAt(0) == ">"){
-        output = `\\begin{quote}${output}\\end{quote}`;
+        output = `\\begin{quote}${output.slice(start = 1)}\\end{quote}`;
     }
 
     // Bold markup
