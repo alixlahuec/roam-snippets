@@ -365,7 +365,7 @@ function formatText(string){
 
     // Embeds : blocks
     let embedBlockRegex = /\{{2}(\[\[)?embed(\]\])?: ?\(\((.+?)\)\)\}{2}/g;
-    output = output.replaceAll(embedBlockRegex, (match, p1) => renderBlockEmbed(uid = p1));
+    output = output.replaceAll(embedBlockRegex, (match, p1, p2, p3) => renderBlockEmbed(uid = p3));
 
     // Embeds : pages
     let embedPageRegex = /\{{2}(\[\[)?embed(\]\])?: ?\[\[(.+?)\]\]\}{2}/g;
