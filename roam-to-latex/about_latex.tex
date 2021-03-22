@@ -1,26 +1,5 @@
 // ABOUT LATEX ------
 
-// Formatting elements
-\textbf{} // In Roam : **text**
-\textit{} // In Roam : __text__
-// TODO: How to handle nested/precedence ? Match as many characters as possible with a regex ?
-
-// Lists
-// Bulleted -- pretty easy I'd say, unless deep nesting
-\begin{itemize}
-    \item The item
-    \item The second item
-\end{itemize}
-// Numbered
-\begin{enumerate}
-    \item An item with nested children
-    \begin{enumerate}
-        \item Nested item 1
-        \item Nested item 2
-    \end{enumerate}
-    \item An item without nested children
-\end{enumerate}
-
 // Table -- now that one's involved
 // The content for each cell should probably be processed beforehand, then piped in
 \begin{tabular}{ l l l } // Specify alignment here for each column
