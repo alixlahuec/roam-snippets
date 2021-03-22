@@ -393,7 +393,7 @@ function formatText(string){
     let spec_chars = ["&", "%", "#"];
     spec_chars.forEach(char => {
         let charRegex = new RegExp(`${char}`, "g");
-        output = output.replaceAll(charRegex, (match) => `\\${match}`);
+        output = output.replaceAll(charRegex, "\\$&");
     });
 
     // FORMATTING ACTUAL TEXT -------------------
