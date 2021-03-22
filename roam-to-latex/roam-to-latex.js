@@ -388,6 +388,10 @@ function formatText(string){
     let aliasRegex = /\[(.+?)(\]\()(.+?)\)/g;
     output = output.replaceAll(aliasRegex, `\\href{$3}{$1}`);
 
+    // Tags : will be removed
+    let tagRegex = /\#(.+?) /g;
+    output = output.replaceAll(tagRegex, "");
+
     // ESCAPING SPECIAL CHARACTERS --------------
 
     let spec_chars = ["&", "%", "#"];
