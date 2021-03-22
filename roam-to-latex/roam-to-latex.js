@@ -388,6 +388,14 @@ function formatText(string){
     let aliasRegex = /\[(.+?)(\]\()(.+?)\)/g;
     output = output.replaceAll(aliasRegex, `\\href{$3}{$1}`);
 
+    // ESCAPING SPECIAL CHARACTERS --------------
+
+    let spec_chars = ["&", "%", "#"];
+    spec_chars.forEach(char => {
+        let charRegex = new RegExp(`${char}`, "g");
+        output = output.replaceAll(charRegex, (match) => `\\${match}`);
+    });
+
     // FORMATTING ACTUAL TEXT -------------------
 
     // Bold markup
