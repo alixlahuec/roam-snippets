@@ -1,6 +1,8 @@
 
 // Looking at Eneko's code for a Roam -> LaTeX converter
 
+const { clean } = require("underscore");
+
 // Got to request :block/order to be able to put blocks in their page order
 // Also have to ask for element [0] because of how the results are structured (note that it's [0] instead of [0][0] because I used the [() ...] structure)
 // Probably also want to ask about headers (Note: if a block is a regular block, there will be no `heading` property returned for the block)
@@ -195,7 +197,7 @@ function startExport(){
 function createTEX(document_class = "book", {numbered = true, cover = true, start_header = 1, authors = "", title = ""} = {}){
     let roamPage = queryPageContentsByTitle(document.title);
 
-    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{asmath}\n\\usepackage{soul}\n\\usepackage{hyperref}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
+    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{soul}\n\\usepackage{hyperref}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
 
     let body = ``;
     body += convertBlocks(roamPage.children, {document_class: document_class, numbered: numbered, start_header: start_header});
@@ -364,7 +366,10 @@ function cleanUpHref(match, url, text){
 }
 
 function renderFigure(match, desc, url){
-    return `\\begin{figure}[${desc}]\n\\includegraphics{${url}}\n\\end{figure}`;
+    let cleanURL = url.replaceAll("%2F", "/");
+    let fileName = cleanURL.match(/[^/]+?\.png|jpg|jpeg/g)[0];
+
+    return `\\begin{figure}[${desc}]\n\\includegraphics{${fileName} from ${cleanURL}}\n\\end{figure}`;
 }
 
 // FORMATTER ---
@@ -402,8 +407,8 @@ function formatText(string){
 
     // Alias links markup
     // Note : this regex matches any []() link structure that is either at the start of the string, or preceded by a character that isn't ! (that's image markup)
-    let aliasRegex = /(?:^|[^!]?)\[(.+?)\]\((.+?)\)/g;
-    output = output.replaceAll(aliasRegex, `\\href{$3}{$1}`);
+    let aliasRegex = /(?:^|[^!])\[(.+?)\]\((.+?)\)/g;
+    output = output.replaceAll(aliasRegex, `\\href{$2}{$1}`);
 
     // Image links markup
     let imageRegex = /!\[(.+?)\]\((.+?)\)/g;
