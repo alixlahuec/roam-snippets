@@ -1,8 +1,6 @@
 
 // Looking at Eneko's code for a Roam -> LaTeX converter
 
-const { clean } = require("underscore");
-
 // Got to request :block/order to be able to put blocks in their page order
 // Also have to ask for element [0] because of how the results are structured (note that it's [0] instead of [0][0] because I used the [() ...] structure)
 // Probably also want to ask about headers (Note: if a block is a regular block, there will be no `heading` property returned for the block)
