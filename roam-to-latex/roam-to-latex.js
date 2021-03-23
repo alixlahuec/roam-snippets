@@ -415,7 +415,7 @@ function formatText(string){
     output = output.replaceAll(imageRegex, (match, p1, p2) => renderFigure(match, desc = p1, url = p2));
 
     // Tags : will be removed
-    let tagRegex = /\#(.+?)( |$)/g;
+    let tagRegex = /(?:^| )\#(.+?)( |$)/g;
     output = output.replaceAll(tagRegex, "");
 
     // ESCAPING SPECIAL CHARACTERS --------------
