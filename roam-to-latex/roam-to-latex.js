@@ -195,7 +195,7 @@ function startExport(){
 function createTEX(document_class = "book", {numbered = true, cover = true, start_header = 1, authors = "", title = ""} = {}){
     let roamPage = queryPageContentsByTitle(document.title);
 
-    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{soul}\n\\usepackage{hyperref}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
+    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{asmath}\n\\usepackage{soul}\n\\usepackage{hyperref}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
 
     let body = ``;
     body += convertBlocks(roamPage.children, {document_class: document_class, numbered: numbered, start_header: start_header});
