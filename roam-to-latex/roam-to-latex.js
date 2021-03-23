@@ -176,8 +176,6 @@ function startExport(){
     let cover = document.querySelector('#roam-to-latex-setting-cover').checked;
     let start_header = Number(document.querySelector('#roam-to-latex-setting-start-header select').value);
 
-    // TODO: stuff to show contents are being processed (e.g, static spinner)
-
     // Launch processing of page contents
     let texOutput = createTEX(document_class = document_class, {numbered: numbered, cover: cover, start_header: start_header, authors: authors, title: title});
 
@@ -351,6 +349,24 @@ function renderPageEmbed(title){
     return `${pageContents.title}\\${(pageContents.children) ? pageContents.children.map(child => renderRaw(child)).join("\n") : ""}`;
 }
 
+function renderMathMode(match, capture){
+    let mathContent = capture;
+
+    return `$$${mathContent.replaceAll(/\\\&/g, "&")}$$`;
+}
+
+function cleanUpHref(match, url, text){
+    let target = url;
+    target = target.replaceAll(/\\\&/g, "&");
+    target = target.replaceAll(/\\\%/g, "%");
+
+    return `\\href{${target}}{${text}}`;
+}
+
+function renderFigure(match, desc, url){
+    return `\\begin{figure}[${desc}]\n\\includegraphics{${url}}\n\\end{figure}`;
+}
+
 // FORMATTER ---
 
 function formatText(string){
@@ -385,8 +401,13 @@ function formatText(string){
     output = output.replaceAll(pageRefRegex, "");
 
     // Alias links markup
-    let aliasRegex = /\[(.+?)(\]\()(.+?)\)/g;
+    // Note : this regex matches any []() link structure that is either at the start of the string, or preceded by a character that isn't ! (that's image markup)
+    let aliasRegex = /(?:^|[^!]?)\[(.+?)\]\((.+?)\)/g;
     output = output.replaceAll(aliasRegex, `\\href{$3}{$1}`);
+
+    // Image links markup
+    let imageRegex = /!\[(.+?)\]\((.+?)\)/g;
+    output = output.replaceAll(imageRegex, (match, p1, p2) => renderFigure(match, desc = p1, url = p2));
 
     // Tags : will be removed
     let tagRegex = /\#(.+?)( |$)/g;
@@ -399,6 +420,14 @@ function formatText(string){
         let charRegex = new RegExp(`${char}`, "g");
         output = output.replaceAll(charRegex, "\\$&");
     });
+
+    // Clean up wrong escapes
+    // Math mode :
+    let mathRegex = /\$\$(.+?)\$\$/g;
+    output = output.replaceAll(mathRegex, (match, capture) => renderMathMode(match, capture));
+    // URLs :
+    let urlRegex = /\\href\{(.+?)\}\{(.+?)\}/g;
+    output = output.replaceAll(urlRegex, (match, p1, p2) => cleanUpHref(match, url = p1, text = p2));
 
     // FORMATTING ACTUAL TEXT -------------------
 
