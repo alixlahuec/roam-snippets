@@ -289,6 +289,8 @@ function traverseTable(block){
 }
 
 function makeTable(block, start_indent = 0){
+    let table_indent = "\t".repeat(start_indent);
+
     let afterText = Array.from(block.string.match(/\{\{(?:\[\[)?table(?:\]\])?\}\}(.+)/g));
     let caption = (afterText.length > 0) ? `\n${table_indent}\\caption{${formatText(afterText[0])}}` : ``;
 
@@ -306,7 +308,6 @@ function makeTable(block, start_indent = 0){
     let row_indent = "\t".repeat(start_indent+1);
     let textRows = rows.map(row => `${row_indent}` + row.map(cell => cell.text).join(" & ") + ` \\\\`).join("\n");
 
-    let table_indent = "\t".repeat(start_indent);
     return `${table_indent}\\begin{table}\n${table_indent}\\centering\n${table_indent}\\begin{tabular}{${align_seq}}\n\\hline\n${textRows}\n${table_indent}\\hline\n${table_indent}\\end{tabular}${caption}\n${table_indent}\\end{table}`;
 }
 
