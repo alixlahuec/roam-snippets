@@ -256,7 +256,7 @@ function makeHeader(string, {document_class = "book", numbered = true, level = 1
 function makeList(elements, type, start_indent = 0){
     let nesting_level = start_indent/2 + 1;
     let list_indent = "\t".repeat(start_indent);
-    if(nesting_level <= 5){
+    if(nesting_level <= 4){
         let cmd = (type == "bulleted") ? "itemize" : "enumerate";
         let blocks = elements.map(el => `${"\t".repeat(start_indent+1)}${parseListElement(el, start_indent+1)}`);
         return `${list_indent}\\begin{${cmd}}\n${blocks.join("\n")}\n${list_indent}\\end{${cmd}}`;
@@ -265,19 +265,66 @@ function makeList(elements, type, start_indent = 0){
     }
 }
 
+function storeCell(block){
+    return {
+        text: formatText(block.string),
+        align: block['text-align'] ? block['text-align'].charAt(0) : "l"
+    }
+}
+
+function traverseRow(block){
+    if(!block.children){
+        return [[storeCell(block)]];
+    } else {
+        return sortRoamBlocks(block.children).map(child => traverseRow(child).map(path => [storeCell(block), ...path])).flat(1);
+    }
+}
+
+function traverseTable(block){
+    let rows = [];
+    sortRoamBlocks(block.children).forEach(child => {
+        rows.push(...traverseRow(child));
+    });
+    return rows;
+}
+
+function makeTable(block){
+    let rows = traverseTable(block);
+    // Count the actual number of columns
+    let n_cols = rows.reduce((f, s) => f.length >= s.length ? f.length : s.length);
+    // Extract alignment sequence from header row
+    let align_seq = rows[0].map(col => col.align);
+    if(align_seq.length < n_cols){
+        let fills = Array.from({length: n_cols - align_seq.length}, () => "l");
+        align_seq.push(...fills);
+    }
+    align_seq = align_seq.join(" ");
+    // Get contents of rows
+    let textRows = rows.map(row => row.map(cell => cell.text).join(" & ") + ` \\\\`).join("\n");
+
+    return `\\begin{tabular}{${align_seq}}\n${textRows}\n\\end{tabular}`;
+}
+
 function parseBlock(block){
-    let output = `${formatText(block.string)}`;
-    // Do stuff to process the children of a non-heading block
-    if(block.children){
-        let format = (block['view-type']) ? block['view-type'] : "bulleted";
-        switch(format){
-            case 'document':
-                output = `${output}\\\\\n${block.children.map(child => parseBlock(child)).join("\\\\")}`;
-                break;
-            case 'bulleted':
-            case 'numbered':
-                output = `${output}\n${makeList(block.children, type = format, start_indent = 0)}`;
-                break;
+    let output = ``;
+    // If the block is a table, stop processing recursively & generate the table element
+    if(block.string == "{{[[table]]}}" || block.string == "{{table}}"){
+        output = makeTable(block);
+    } else {
+        // Do stuff to process the children of a non-heading, non-table block
+        output = `${formatText(block.string)}`;
+        if(block.children){
+            let children = sortRoamBlocks(block.children);
+            let format = (block['view-type']) ? block['view-type'] : "bulleted";
+            switch(format){
+                case 'document':
+                    output = `${output}\\\\\n${children.map(child => parseBlock(child)).join("\\\\")}`;
+                    break;
+                case 'bulleted':
+                case 'numbered':
+                    output = `${output}\n${makeList(children, type = format, start_indent = 0)}`;
+                    break;
+            }
         }
     }
     return output;
@@ -307,9 +354,15 @@ function parseListElement(block, start_indent){
 // RENDERER ---
 
 function renderRaw(block){
-    let output = formatText(block.string);
-    if(block.children){
-        output = `${output}\\\\${block.children.map(child => renderRaw(child)).join("\\\\")}`;
+    let output = ``;
+    // If the block is a table, stop processing recursively & generate the table element
+    if(block.string == "{{[[table]]}}" || block.string == "{{table}}"){
+        output = makeTable(block);
+    } else {
+        output = formatText(block.string);
+        if(block.children){
+            output = `${output}\\\\${block.children.map(child => renderRaw(child)).join("\\\\")}`;
+        }
     }
     return output;
 }
@@ -375,7 +428,7 @@ function renderFigure(match, desc, url){
 function formatText(string){
     let output = string;
 
-    // RENDERING BLOCK REFS/EMBEDS etc. ---------
+    // RENDERING BLOCK + PAGE REFS/EMBEDS, DOUBLE PARENTHESES ---------
     // Aka, is there additional text content that needs to be pulled ?
 
     // Block aliases
@@ -393,6 +446,16 @@ function formatText(string){
     // `(())` markup
     let doubleParRegex = /\(\(([^\(\)]+?)\)\)/g;
     output = output.replaceAll(doubleParRegex, (match, p1) => renderDoublePar(content = p1));
+
+    // DELETING ELEMENTS : iframe, word-count, block part
+
+    let deleteElems = ["iframe", "word-count", "=:"];
+    deleteElems.forEach(el => {
+        let elRegex = new RegExp(`\{\{(\[\[)?${el}(\]\])?([^\}]+?)?\}\}`, "g");
+        output = output.replaceAll(elRegex, "");
+    })
+
+    // REPLACING ELEMENTS
 
     // Page aliases
     let pageAliasRegex = /\[(.+?)\]\(\[\[(.+?)\]\]\)/g;
@@ -451,11 +514,9 @@ function formatText(string){
 
     // TODO:
     // + in-text LaTeX math ($$ to $)
-    // + the =: popup thing ?
     // + citations, of course
-    // + tables
-    // + iframe/video embed/pdf embed ?
-    // + clean up calc/word-count/etc. ?
+    // + video embed/pdf embed ?
+    // + clean up calc/etc. ?
     // + attributes ?
     // strikethrough : seems like this requires an external package, so leaving it aside for now
 
