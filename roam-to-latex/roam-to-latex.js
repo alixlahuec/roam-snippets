@@ -221,7 +221,7 @@ function convertBlocks(arr, {document_class = "book", numbered = true, start_hea
             }
         } else{
             // If the block isn't a heading, stop using the header tree for recursion
-            output = `${parseBlock(block)}`;
+            output = `${output}\\\\\n${parseBlock(block)}`;
         }
     });
     if(output.slice(-2) == "\\\\"){
