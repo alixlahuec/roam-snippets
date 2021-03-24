@@ -261,7 +261,7 @@ function makeList(elements, type, start_indent = 0){
         let blocks = elements.map(el => `${"\t".repeat(start_indent+1)}${parseListElement(el, start_indent+1)}`);
         return `${list_indent}\\begin{${cmd}}\n${blocks.join("\n")}\n${list_indent}\\end{${cmd}}`;
     } else{
-        return `${list_indent}${elements.map(el => renderRaw(el)).join("\\\\")}`;
+        return `${list_indent}${elements.map(el => renderRaw(el, start_indent = start_indent)).join("\\\\")}`;
     }
 }
 
@@ -335,13 +335,13 @@ function parseBlock(block){
 function parseListElement(block, start_indent){
     let output = ``;
     if(block.string == "{{[[table]]}}" || block.string == "{{table}}"){
-        output = `\\item{\n${makeTable(block, start_indent = start_indent)}}`;
+        output = `\\item{\n${makeTable(block, start_indent = start_indent+1)}}`;
     } else {
         let format = (block['view-type']) ? block['view-type'] : "bulleted";
         switch(format){
             // If the list item is in "Document" mode, pull all of its content as raw & use that as the list item, with newline separation
             case 'document':
-                output = `\\item{${renderRaw(block)}}`;
+                output = `\\item{${renderRaw(block, start_indent = start_indent+1)}}`;
                 break;
             // Otherwise, use the string as the list item & render a sublist
             case 'bulleted':
@@ -359,15 +359,15 @@ function parseListElement(block, start_indent){
 
 // RENDERER ---
 
-function renderRaw(block){
+function renderRaw(block, start_indent = 0){
     let output = ``;
     // If the block is a table, stop processing recursively & generate the table element
     if(block.string == "{{[[table]]}}" || block.string == "{{table}}"){
-        output = makeTable(block);
+        output = `\n${makeTable(block, start_indent = start_indent)}\n`;
     } else {
         output = formatText(block.string);
         if(block.children){
-            output = `${output}\\\\${block.children.map(child => renderRaw(child)).join("\\\\")}`;
+            output = `${output}\\\\${block.children.map(child => renderRaw(child, start_indent = start_indent)).join("\\\\")}`;
         }
     }
     return output;
