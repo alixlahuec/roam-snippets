@@ -499,7 +499,7 @@ function formatText(string){
 
     // Clean up wrong escapes
     // Math mode :
-    let mathRegex = /\$\$(.+?)\$\$/g;
+    let mathRegex = /\$\$([\s\S^\$]+?)\$\$/g;
     output = output.replaceAll(mathRegex, (match, capture) => renderMathMode(match, capture));
     // URLs :
     let urlRegex = /\\href\{(.+?)\}\{(.+?)\}/g;
