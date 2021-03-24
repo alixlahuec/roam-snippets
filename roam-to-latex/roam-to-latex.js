@@ -221,7 +221,7 @@ function convertBlocks(arr, {document_class = "book", numbered = true, start_hea
             }
         } else{
             // If the block isn't a heading, stop using the header tree for recursion
-            output = `${output}${parseBlock(block)}`;
+            output = `${parseBlock(block)}`;
         }
     });
     if(output.slice(-2) == "\\\\"){
@@ -288,7 +288,7 @@ function traverseTable(block){
     return rows;
 }
 
-function makeTable(block){
+function makeTable(block, start_indent = 0){
     let rows = traverseTable(block);
     // Count the actual number of columns
     let n_cols = rows.reduce((f, s) => f.length >= s.length ? f.length : s.length);
@@ -300,9 +300,11 @@ function makeTable(block){
     }
     align_seq = align_seq.join(" ");
     // Get contents of rows
-    let textRows = rows.map(row => row.map(cell => cell.text).join(" & ") + ` \\\\`).join("\n");
+    let row_indent = "\t".repeat(start_indent+1);
+    let textRows = rows.map(row => `${row_indent}` + row.map(cell => cell.text).join(" & ") + ` \\\\`).join("\n");
 
-    return `\\begin{tabular}{${align_seq}}\n${textRows}\n\\end{tabular}`;
+    let table_indent = "\t".repeat(start_indent);
+    return `${table_indent}\\begin{tabular}{${align_seq}}\n${textRows}\n${table_indent}\\end{tabular}`;
 }
 
 function parseBlock(block){
@@ -332,21 +334,25 @@ function parseBlock(block){
 
 function parseListElement(block, start_indent){
     let output = ``;
-    let format = (block['view-type']) ? block['view-type'] : "bulleted";
-    switch(format){
-        // If the list item is in "Document" mode, pull all of its content as raw & use that as the list item, with newline separation
-        case 'document':
-            output = `\\item{${renderRaw(block)}}`;
-            break;
-        // Otherwise, use the string as the list item & render a sublist
-        case 'bulleted':
-        case 'numbered':
-            if(block.children){
-                output = `\\item{${formatText(block.string)}}\n${makeList(block.children, type = format, start_indent = start_indent + 1)}`;
-            } else{
-                output = `\\item{${formatText(block.string)}}`;
-            }
-            break;
+    if(block.string == "{{[[table]]}}" || block.string == "{{table}}"){
+        output = makeTable(block, start_indent = start_indent+1);
+    } else {
+        let format = (block['view-type']) ? block['view-type'] : "bulleted";
+        switch(format){
+            // If the list item is in "Document" mode, pull all of its content as raw & use that as the list item, with newline separation
+            case 'document':
+                output = `\\item{${renderRaw(block)}}`;
+                break;
+            // Otherwise, use the string as the list item & render a sublist
+            case 'bulleted':
+            case 'numbered':
+                if(block.children){
+                    output = `\\item{${formatText(block.string)}}\n${makeList(block.children, type = format, start_indent = start_indent + 1)}`;
+                } else{
+                    output = `\\item{${formatText(block.string)}}`;
+                }
+                break;
+        }
     }
     return output;
 }
@@ -449,7 +455,7 @@ function formatText(string){
 
     // DELETING ELEMENTS : iframe, word-count, block part
 
-    let deleteElems = ["iframe", "word-count", "=:"];
+    let deleteElems = ["iframe", "word\\-count", "=:"];
     deleteElems.forEach(el => {
         let elRegex = new RegExp(`\{\{(\[\[)?${el}(\]\])?([^\}]+?)?\}\}`, "g");
         output = output.replaceAll(elRegex, "");
