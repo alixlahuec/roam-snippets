@@ -221,7 +221,7 @@ function convertBlocks(arr, {document_class = "book", numbered = true, start_hea
             }
         } else{
             // If the block isn't a heading, stop using the header tree for recursion
-            output = `${output}\\\\\n${parseBlock(block)}`;
+            output = `${output}\n${parseBlock(block)}`;
         }
     });
     if(output.slice(-2) == "\\\\"){
@@ -442,7 +442,7 @@ function formatText(string){
     // Aka, is there additional text content that needs to be pulled ?
 
     // Block aliases
-    let blockAliasRegex = /\[(.+?)\]\(\(\((.+?)\)\)\)/g;
+    let blockAliasRegex = / \[(.+?)\]\(\(\((.+?)\)\)\)/g;
     output = output.replaceAll(blockAliasRegex, (match, p1, p2) => `${p1} \\footnote{${renderBlockRef(uid = p2)}}`);
 
     // Embeds : blocks
