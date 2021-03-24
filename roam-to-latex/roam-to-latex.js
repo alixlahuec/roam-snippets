@@ -7,16 +7,30 @@
 // Probably also want to ask about view-type (Note : if no view has been specified, there will be no `view-type` property returned for the parent block)
 // Probably also want to ask about text-align (... again, if not set, no property will be returned. Can use destructuring with default value when processing each block)
 
+// How to do programmatic file downloads :
+// For figures -> get the firebase URL, do a fetch() GET request, then read the result with .blob(). Running saveAs(blob, "filename.ext") will trigger a download box for the user.
+// Figure URLs are stored in fig_URLs, individual names should be gotten from indices ; so next step is to zip all of the blobs together
+
 
 // INITIALIZATION ------
 
+// Load the lightweight client-zip library
+var s = document.createElement('script');
+s.src = "https://unpkg.com/client-zip@2.0.0/index.js";
+s.type = "text/javascript";
+document.getElementsByTagName("head")[0].appendChild(s);
+
+// Setup the UI
 createOverlayDialog();
 setupExportOverlay();
 addExportButton();
 window.addEventListener("hashchange", addExportButton);
 
+// Global variables to keep track of figures
 fig_count = 0;
 fig_URLs = [];
+fig_types = [];
+fig_blob = null;
 
 // FUNCTIONS ------
 
@@ -113,6 +127,7 @@ function createOverlayDialog(){
             // Add footer elements
             searchDialogFooter.innerHTML = `<div class="bp3-dialog-footer-actions">
                                                 <span class="bp3-popover2-target" tabindex="0">
+                                                    <a class="bp3-button roam-to-latex-export-figures">Download figures</a>
                                                     <button type="button" class="roam-to-latex-export-tex bp3-button">
                                                     <span class="bp3-button-text">Export to .tex file</span>
                                                     </button>
@@ -155,8 +170,17 @@ function addExportButton(){
 }
 
 function clearExportElements(){
+    // Export contents
     document.querySelector("#roam-to-latex-export-contents").value = ``;
     document.querySelector("#roam-to-latex-export-form input[type='submit']").disabled = true;
+
+    // Figures
+    fig_count = 0;
+    fig_URLs = [];
+    fig_types = [];
+    if(fig_blob != null){ URL.revokeObjectURL(fig_blob) };
+    document.querySelector('roam-to-latex-export-figures').removeAttribute('download');
+    document.querySelector('roam-to-latex-export-figures').removeAttribute('href');
 }
 
 function toggleExportOverlay(command){
@@ -182,6 +206,9 @@ function startExport(){
     // Launch processing of page contents
     let texOutput = createTEX(document_class = document_class, {numbered: numbered, cover: cover, start_header: start_header, authors: authors, title: title});
 
+    // Prepare .zip of figures for download
+    getFigures();
+
     // Display results, and enable action buttons
     let contentsArea = document.querySelector('#roam-to-latex-export-contents');
     contentsArea.value = texOutput;
@@ -189,7 +216,25 @@ function startExport(){
     document.querySelector("#roam-to-latex-export-form input[type='submit']").removeAttribute('disabled');
     document.querySelector("#roam-to-latex-export-form").style.display = "block";
 
-    // TODO: stuff to enable the "Export to Overleaf", "Download as .tex" and "Copy to Clipboard" buttons
+    // TODO: stuff to enable the "Download as .tex" and other download buttons
+}
+
+function getFigures(){
+    if(fig_count > 0){
+        let figs = [];
+        fig_URLs.forEach( (url, i) => {
+            calls.push({name: `figure-${i}.${fig_types[i]}`, input:fetch(url, {method: 'GET'})});
+        });
+
+        let blob = await downloadZip(figs).blob();
+        fig_blob = URL.createObjectURL(blob);
+
+        let downloadButton = document.querySelector('roam-to-latex-export-figures');
+        downloadButton.innerHTML = `Download figures (${fig_count})`;
+        downloadButton.download = "figures.zip";
+        downloadButton.href = fig_blob;
+    }
+    
 }
 
 // PARSER ---
@@ -198,7 +243,7 @@ function startExport(){
 function createTEX(document_class = "book", {numbered = true, cover = true, start_header = 1, authors = "", title = ""} = {}){
     let roamPage = queryPageContentsByTitle(document.title);
 
-    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{soul}\n\\usepackage{hyperref}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
+    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\\usepackage{soul}\n\\usepackage{hyperref}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
     
     fig_count = 0;
     fig_URLs = [];
@@ -441,6 +486,7 @@ function renderFigure(match, desc, url){
     let fileInfo = Array.from(cleanURL.matchAll(/[^/]+?\.(png|jpg|jpeg)/g));
     let fileName = fileInfo[0][0];
     let fileExt = fileInfo[0][1];
+    fig_types.push(fileExt);
 
     return `\\begin{figure}[h!]\n\\caption{${desc}}\n\\includegraphics{figure-${fig_count}.${fileExt}}\n\\end{figure}`;
 }
