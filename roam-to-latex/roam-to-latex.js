@@ -335,7 +335,7 @@ function parseBlock(block){
 function parseListElement(block, start_indent){
     let output = ``;
     if(block.string == "{{[[table]]}}" || block.string == "{{table}}"){
-        output = makeTable(block, start_indent = start_indent+1);
+        output = `\\item{\n${makeTable(block, start_indent = start_indent)}}`;
     } else {
         let format = (block['view-type']) ? block['view-type'] : "bulleted";
         switch(format){
