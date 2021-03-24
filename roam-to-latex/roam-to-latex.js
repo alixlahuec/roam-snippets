@@ -15,6 +15,9 @@ setupExportOverlay();
 addExportButton();
 window.addEventListener("hashchange", addExportButton);
 
+fig_count = 0;
+fig_URLs = [];
+
 // FUNCTIONS ------
 
 // INTERFACE ---
@@ -196,6 +199,9 @@ function createTEX(document_class = "book", {numbered = true, cover = true, star
     let roamPage = queryPageContentsByTitle(document.title);
 
     let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{soul}\n\\usepackage{hyperref}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
+    
+    fig_count = 0;
+    fig_URLs = [];
 
     let body = ``;
     body += convertBlocks(roamPage.children, {document_class: document_class, numbered: numbered, start_header: start_header});
@@ -415,7 +421,7 @@ function renderPageEmbed(title){
 function renderMathMode(match, capture){
     let mathContent = capture;
 
-    return `$$${mathContent.replaceAll(/\\\&/g, "&")}$$`;
+    return `$${mathContent.replaceAll(/\\\&/g, "&")}$`;
 }
 
 function cleanUpHref(match, url, text){
@@ -427,10 +433,16 @@ function cleanUpHref(match, url, text){
 }
 
 function renderFigure(match, desc, url){
-    let cleanURL = url.replaceAll("%2F", "/");
-    let fileName = cleanURL.match(/[^/]+?\.png|jpg|jpeg/g)[0];
+    fig_count += 1;
 
-    return `\\begin{figure}[h!]\n\\caption{${desc}}\n\\includegraphics{${fileName} from ${cleanURL}}\n\\end{figure}`;
+    let cleanURL = url.replaceAll("%2F", "/");
+    fig_URLs.push(cleanURL)
+
+    let fileInfo = Array.from(cleanURL.matchAll(/[^/]+?\.(png|jpg|jpeg)/g));
+    let fileName = fileInfo[0][0];
+    let fileExt = fileInfo[0][1];
+
+    return `\\begin{figure}[h!]\n\\caption{${desc}}\n\\includegraphics{figure-${fig_count}.${fileExt}}\n\\end{figure}`;
 }
 
 // FORMATTER ---
@@ -523,7 +535,6 @@ function formatText(string){
     output = output.replaceAll(highlightRegex, `\\hl{$1}`);
 
     // TODO:
-    // + in-text LaTeX math ($$ to $)
     // + citations, of course
     // + video embed/pdf embed ?
     // + clean up calc/etc. ?
