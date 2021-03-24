@@ -430,7 +430,7 @@ function renderFigure(match, desc, url){
     let cleanURL = url.replaceAll("%2F", "/");
     let fileName = cleanURL.match(/[^/]+?\.png|jpg|jpeg/g)[0];
 
-    return `\\begin{figure}[${desc}]\n\\includegraphics{${fileName} from ${cleanURL}}\n\\end{figure}`;
+    return `\\begin{figure}[h!]\n\\caption{${desc}}\n\\includegraphics{${fileName} from ${cleanURL}}\n\\end{figure}`;
 }
 
 // FORMATTER ---
@@ -482,7 +482,7 @@ function formatText(string){
     output = output.replaceAll(aliasRegex, `\\href{$2}{$1}`);
 
     // Image links markup
-    let imageRegex = /!\[(.+?)\]\((.+?)\)/g;
+    let imageRegex = /!\[(.+?)?\]\((.+?)\)/g;
     output = output.replaceAll(imageRegex, (match, p1, p2) => renderFigure(match, desc = p1, url = p2));
 
     // Tags : will be removed
@@ -528,6 +528,7 @@ function formatText(string){
     // + video embed/pdf embed ?
     // + clean up calc/etc. ?
     // + attributes ?
+    // + code (inline + block)
     // strikethrough : seems like this requires an external package, so leaving it aside for now
 
     return output;
