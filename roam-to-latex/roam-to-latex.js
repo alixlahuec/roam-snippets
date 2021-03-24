@@ -308,7 +308,7 @@ function makeTable(block, start_indent = 0){
     let row_indent = "\t".repeat(start_indent+1);
     let textRows = rows.map(row => `${row_indent}` + row.map(cell => cell.text).join(" & ") + ` \\\\`).join("\n");
 
-    return `${table_indent}\\begin{table}\n${table_indent}\\centering\n${table_indent}\\begin{tabular}{${align_seq}}\n\\hline\n${textRows}\n${table_indent}\\hline\n${table_indent}\\end{tabular}${caption}\n${table_indent}\\end{table}`;
+    return `${table_indent}\\begin{table}[h!]\n${table_indent}\\centering\n${table_indent}\\begin{tabular}{${align_seq}}\n${row_indent}\\hline\n${textRows}\n${row_indent}\\hline\n${table_indent}\\end{tabular}${caption}\n${table_indent}\\end{table}`;
 }
 
 function parseBlock(block){
