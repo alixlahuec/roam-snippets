@@ -289,6 +289,9 @@ function traverseTable(block){
 }
 
 function makeTable(block, start_indent = 0){
+    let afterText = Array.from(block.string.match(/\{\{(?:\[\[)?table(?:\]\])?\}\}(.+)/g));
+    let caption = (afterText.length > 0) ? `\n${table_indent}\\caption{${formatText(afterText[0])}}` : ``;
+
     let rows = traverseTable(block);
     // Count the actual number of columns
     let n_cols = rows.reduce((f, s) => f.length >= s.length ? f.length : s.length);
@@ -304,13 +307,13 @@ function makeTable(block, start_indent = 0){
     let textRows = rows.map(row => `${row_indent}` + row.map(cell => cell.text).join(" & ") + ` \\\\`).join("\n");
 
     let table_indent = "\t".repeat(start_indent);
-    return `${table_indent}\\begin{tabular}{${align_seq}}\n${textRows}\n${table_indent}\\end{tabular}`;
+    return `${table_indent}\\begin{table}\n${table_indent}\\centering\n${table_indent}\\begin{tabular}{${align_seq}}\n\\hline\n${textRows}\n${table_indent}\\hline\n${table_indent}\\end{tabular}${caption}\n${table_indent}\\end{table}`;
 }
 
 function parseBlock(block){
     let output = ``;
     // If the block is a table, stop processing recursively & generate the table element
-    if(block.string == "{{[[table]]}}" || block.string == "{{table}}"){
+    if(block.string.includes("{{[[table]]}}") || block.string.includes("{{table}}")){
         output = makeTable(block);
     } else {
         // Do stuff to process the children of a non-heading, non-table block
@@ -334,7 +337,7 @@ function parseBlock(block){
 
 function parseListElement(block, start_indent){
     let output = ``;
-    if(block.string == "{{[[table]]}}" || block.string == "{{table}}"){
+    if(block.string.includes("{{[[table]]}}") || block.string.includes("{{table}}")){
         output = `\\item{\n${makeTable(block, start_indent = start_indent+1)}}`;
     } else {
         let format = (block['view-type']) ? block['view-type'] : "bulleted";
@@ -362,7 +365,7 @@ function parseListElement(block, start_indent){
 function renderRaw(block, start_indent = 0){
     let output = ``;
     // If the block is a table, stop processing recursively & generate the table element
-    if(block.string == "{{[[table]]}}" || block.string == "{{table}}"){
+    if(block.string.includes("{{[[table]]}}") || block.string.includes("{{table}}")){
         output = `\n${makeTable(block, start_indent = start_indent)}\n`;
     } else {
         output = formatText(block.string);
