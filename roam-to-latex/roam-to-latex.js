@@ -183,7 +183,7 @@ function clearExportElements(){
         document.querySelector('roam-to-latex-export-figures').removeAttribute('download');
         document.querySelector('roam-to-latex-export-figures').removeAttribute('href');
     } catch(e){};
-    
+
 }
 
 function toggleExportOverlay(command){
@@ -482,9 +482,7 @@ function cleanUpHref(match, url, text){
 
 function renderFigure(match, desc, url){
     fig_count += 1;
-
-    let cleanURL = url.replaceAll("%2F", "/");
-    fig_URLs.push(cleanURL)
+    fig_URLs.push(url);
 
     let fileInfo = Array.from(cleanURL.matchAll(/[^/]+?\.(png|jpg|jpeg)/g));
     let fileName = fileInfo[0][0];
