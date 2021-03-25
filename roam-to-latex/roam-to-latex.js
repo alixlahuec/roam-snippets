@@ -16,9 +16,8 @@
 
 // Load the lightweight client-zip library
 var s = document.createElement('script');
-s.innerHTML = `import { downloadZip } from "https://unpkg.com/client-zip@2.0.0/index.js";`;
-s.type = "module";
-s.async = true;
+s.src = "https://cdn.jsdelivr.net/npm/client-zip/worker.js";
+s.type = "text/javascript";
 document.getElementsByTagName("head")[0].appendChild(s);
 
 // Global variables to keep track of figures
@@ -180,8 +179,11 @@ function clearExportElements(){
     fig_URLs = [];
     fig_types = [];
     if(fig_blob != null){ URL.revokeObjectURL(fig_blob) };
-    document.querySelector('roam-to-latex-export-figures').removeAttribute('download');
-    document.querySelector('roam-to-latex-export-figures').removeAttribute('href');
+    try{
+        document.querySelector('roam-to-latex-export-figures').removeAttribute('download');
+        document.querySelector('roam-to-latex-export-figures').removeAttribute('href');
+    } catch(e){};
+    
 }
 
 function toggleExportOverlay(command){
