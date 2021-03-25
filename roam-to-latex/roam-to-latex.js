@@ -183,7 +183,7 @@ function clearExportElements(){
         document.querySelector('roam-to-latex-export-figures').removeAttribute('download');
         document.querySelector('roam-to-latex-export-figures').removeAttribute('href');
     } catch(e){};
-
+    
 }
 
 function toggleExportOverlay(command){
@@ -224,15 +224,19 @@ async function startExport(){
 
 async function getFigures(){
     if(fig_count > 0){
-        let figs = [];
+        let calls = [];
         fig_URLs.forEach( (url, i) => {
-            figs.push({name: `figure-${i}.${fig_types[i]}`, input:fetch(url, {method: 'GET'})});
+            calls.push(fetch(url, {method: 'GET'}));
         });
+        let figs = await Promise.all(calls);
+        figs = figs.map( (call, i) => {
+            return {name: `figure-${i+1}.${fig_types[i]}`, input: call};
+        })
 
         let blob = await downloadZip(figs).blob();
         fig_blob = URL.createObjectURL(blob);
 
-        let downloadButton = document.querySelector('roam-to-latex-export-figures');
+        let downloadButton = document.querySelector('.roam-to-latex-export-figures');
         downloadButton.innerHTML = `Download figures (${fig_count})`;
         downloadButton.download = "figures.zip";
         downloadButton.href = fig_blob;
@@ -484,12 +488,17 @@ function renderFigure(match, desc, url){
     fig_count += 1;
     fig_URLs.push(url);
 
+    let cleanURL = url.replaceAll("%2F", "/");
     let fileInfo = Array.from(cleanURL.matchAll(/[^/]+?\.(png|jpg|jpeg)/g));
-    let fileName = fileInfo[0][0];
+    // let fileName = fileInfo[0][0];
     let fileExt = fileInfo[0][1];
     fig_types.push(fileExt);
 
-    return `\\begin{figure}[h!]\n\\caption{${desc}}\n\\includegraphics{figure-${fig_count}.${fileExt}}\n\\end{figure}`;
+    return `\\begin{figure}[p]\n\\caption{${desc}}\n\\includegraphics[width=\\textwidth]{figure-${fig_count}.${fileExt}}\n\\end{figure}`;
+}
+
+function renderCodeBlock(match, capture){
+    return `\\begin{verbatim}\n${capture}\n\\end{verbatim}`;
 }
 
 // FORMATTER ---
@@ -543,6 +552,10 @@ function formatText(string){
     // Image links markup
     let imageRegex = /!\[(.+?)?\]\((.+?)\)/g;
     output = output.replaceAll(imageRegex, (match, p1, p2) => renderFigure(match, desc = p1, url = p2));
+
+    // Code blocks
+    let codeBlockRegex = /```([\s\S]+?)```/g;
+    output = output.replaceAll(codeBlockRegex, (match, capture) => renderCodeBlock(match, capture));
 
     // Tags : will be removed
     let tagRegex = /(?:^| )\#(.+?)( |$)/g;
