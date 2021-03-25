@@ -349,8 +349,14 @@ function traverseTable(block){
 function makeTable(block, start_indent = 0){
     let table_indent = "\t".repeat(start_indent);
 
-    let afterText = Array.from(block.string.match(/\{\{(?:\[\[)?table(?:\]\])?\}\}(.+)/g));
-    let caption = (afterText.length > 0) ? `\n${table_indent}\\caption{${formatText(afterText[0])}}` : ``;
+    let afterTextMatch = Array.from(block.string.matchAll(/\{\{(?:\[\[)?table(?:\]\])?\}\}(.+)/g))[0] || false;
+    // Below is the same structure as with figures rendering
+    let labelRegex = /(`.+?`)/g;
+    let labelMatch = Array.from(extra.matchAll(labelRegex))[0] || false;
+    let labelEl = labelMatch ? `${table_indent}\\label{table:${labelMatch[0].slice(1,-1)}}\n` : ``;
+
+    let desc = extra.replace(labelRegex, "").trim();
+    let descEl = (desc.length > 0) ? `${table_indent}\\caption{${formatText(afterTextMatch[1])}}\n` : ``;
 
     let rows = traverseTable(block);
     // Count the actual number of columns
@@ -366,7 +372,7 @@ function makeTable(block, start_indent = 0){
     let row_indent = "\t".repeat(start_indent+1);
     let textRows = rows.map(row => `${row_indent}` + row.map(cell => cell.text).join(" & ") + ` \\\\`).join("\n");
 
-    return `${table_indent}\\begin{table}[h!]\n${table_indent}\\centering\n${table_indent}\\begin{tabular}{${align_seq}}\n${row_indent}\\hline\n${textRows}\n${row_indent}\\hline\n${table_indent}\\end{tabular}${caption}\n${table_indent}\\end{table}`;
+    return `${table_indent}\\begin{table}[h!]\n${table_indent}\\centering\n${table_indent}\\begin{tabular}{${align_seq}}\n${row_indent}\\hline\n${textRows}\n${row_indent}\\hline\n${table_indent}\\end{tabular}\n${descEl}${labelEl}${table_indent}\\end{table}`;
 }
 
 function parseBlock(block){
@@ -470,11 +476,20 @@ function renderPageEmbed(title){
     return `${pageContents.title}\\${(pageContents.children) ? pageContents.children.map(child => renderRaw(child)).join("\n") : ""}`;
 }
 
-function renderMathMode(match, capture, offset){
+function renderMathMode(match, capture, label, offset){
     let mathContent = capture;
-    let spacing = (offset == 0) ? `\n` : ``;
-
-    return `${spacing}$${mathContent.replaceAll(/\\\&/g, "&")}$`;
+    if(offset == 0){
+        let eqLabel = label;
+        if(typeof(eqLabel) == 'undefined'){
+            eqLabel = ``;
+        } else{
+            let hasLabel = Array.from(eqLabel.matchAll(/(`.+?`)/g))[0] || false;
+            eqLabel = hasLabel[0] ? `\\label{eq:${hasLabel[0].slice(1,-1)}}\n` : ``;
+        }
+        return `\n\\begin{equation}\n${eqLabel}${capture}\n\\end{equation}`;
+    } else{
+        return `$${mathContent.replaceAll(/\\\&/g, "&")}$`;
+    }
 }
 
 function cleanUpHref(match, url, text){
@@ -485,7 +500,7 @@ function cleanUpHref(match, url, text){
     return `\\href{${target}}{${text}}`;
 }
 
-function renderFigure(match, label, url, caption){
+function renderFigure(match, caption, url, extra){
     fig_count += 1;
     fig_URLs.push(url);
 
@@ -495,7 +510,16 @@ function renderFigure(match, label, url, caption){
     let fileExt = fileInfo[0][1];
     fig_types.push(fileExt);
 
-    return `\\begin{figure}[p]\n\\includegraphics[width=\\textwidth]{figure-${fig_count}.${fileExt}}\n\\caption{${formatText(caption)}}\n\\label{fig:${label}}\n\\end{figure}`;
+    // Parse extra information : label, description
+    // Note : the first bit of inline code will be used as the figure label, if there are others they will be ignored
+    let labelRegex = /(`.+?`)/g;
+    let labelMatch = Array.from(extra.matchAll(labelRegex))[0] || false;
+    let labelEl = labelMatch ? `\\label{fig:${labelMatch[0].slice(1,-1)}}\n` : ``;
+
+    let desc = extra.replace(labelRegex, "").trim();
+    let descEl = (desc.length > 0) ? `\\medskip\n${formatText(desc)}\n` : ``;
+
+    return `\\begin{figure}[p]\n\\includegraphics[width=\\textwidth]{figure-${fig_count}.${fileExt}}\n\\caption{${formatText(caption)}}\n${labelEl}\n${descEl}\\end{figure}`;
 }
 
 function renderCodeBlock(match, capture){
@@ -549,23 +573,19 @@ function formatText(string){
 
     // Image links markup
     let imageRegex = /!\[(.+?)?\]\((.+?)\)(.+)/g;
-    output = output.replaceAll(imageRegex, (match, p1, p2, p3) => renderFigure(match, label = p1, url = p2, caption = p3));
+    output = output.replaceAll(imageRegex, (match, p1, p2, p3) => renderFigure(match, caption = p1, url = p2, extra = p3));
 
     // Code blocks
     let codeBlockRegex = /```([\s\S]+?)```/g;
     output = output.replaceAll(codeBlockRegex, (match, capture) => renderCodeBlock(match, capture));
 
-    // Inline code
-    let codeInlineRegex = /`(.+?)`/g;
-    output = output.replaceAll(codeInlineRegex, (match, capture) => `\\verb|${capture}|`);
-
     // Tags : will be removed
     let tagRegex = /(?:^| )\#(.+?)( |$)/g;
     output = output.replaceAll(tagRegex, "");
 
-    // Figure references
-    let figRefRegex = /\{\{fig:(.+?)\}\}/g;
-    output = output.replaceAll(figRefRegex, (match, capture) => `\\ref{fig:${capture}}`);
+    // In-text references (figures, equations)
+    let refRegex = /\{\{(fig|eq)\:(.+?)\}\}/g;
+    output = output.replaceAll(refRegex, (match, type, label) => `\\ref{${type}:${label}}`);
 
     // ESCAPING SPECIAL CHARACTERS --------------
 
@@ -577,11 +597,15 @@ function formatText(string){
 
     // Clean up wrong escapes
     // Math mode :
-    let mathRegex = /\$\$([\s\S^\$]+?)\$\$/g;
-    output = output.replaceAll(mathRegex, (match, capture, offset) => renderMathMode(match, capture, offset));
+    let mathRegex = /\$\$([\s\S^\$]+?)\$\$([\s\S]+)?/g;
+    output = output.replaceAll(mathRegex, (match, capture, label, offset) => renderMathMode(match, capture, label, offset));
     // URLs :
     let urlRegex = /\\href\{(.+?)\}\{(.+?)\}/g;
     output = output.replaceAll(urlRegex, (match, p1, p2) => cleanUpHref(match, url = p1, text = p2));
+
+    // Inline code
+    let codeInlineRegex = /`(.+?)`/g;
+    output = output.replaceAll(codeInlineRegex, (match, capture) => `\\verb|${capture}|`);
 
     // FORMATTING ACTUAL TEXT -------------------
 
