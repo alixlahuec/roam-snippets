@@ -557,6 +557,10 @@ function formatText(string){
     let codeBlockRegex = /```([\s\S]+?)```/g;
     output = output.replaceAll(codeBlockRegex, (match, capture) => renderCodeBlock(match, capture));
 
+    // Inline code
+    let codeInlineRegex = /`(.+?)`/g;
+    output = output.replaceAll(codeInlineRegex, (match, capture) => `\\verb|${capture}|`);
+
     // Tags : will be removed
     let tagRegex = /(?:^| )\#(.+?)( |$)/g;
     output = output.replaceAll(tagRegex, "");
