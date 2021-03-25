@@ -194,7 +194,7 @@ function toggleExportOverlay(command){
     }
 }
 
-function startExport(){
+async function startExport(){
     // Get value of HTML form elements
     let document_class = document.querySelector('#roam-to-latex-setting-document-class select').value;
     let authors = document.querySelector('#roam-to-latex-setting-authors').value;
