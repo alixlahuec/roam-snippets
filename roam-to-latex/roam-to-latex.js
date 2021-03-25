@@ -207,7 +207,7 @@ function startExport(){
     let texOutput = createTEX(document_class = document_class, {numbered: numbered, cover: cover, start_header: start_header, authors: authors, title: title});
 
     // Prepare .zip of figures for download
-    getFigures();
+    await getFigures();
 
     // Display results, and enable action buttons
     let contentsArea = document.querySelector('#roam-to-latex-export-contents');
@@ -219,7 +219,7 @@ function startExport(){
     // TODO: stuff to enable the "Download as .tex" and other download buttons
 }
 
-function getFigures(){
+async function getFigures(){
     if(fig_count > 0){
         let figs = [];
         fig_URLs.forEach( (url, i) => {
