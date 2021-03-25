@@ -495,7 +495,7 @@ function renderFigure(match, label, url, caption){
     let fileExt = fileInfo[0][1];
     fig_types.push(fileExt);
 
-    return `\\begin{figure}[p]\n\\caption{${formatText(caption)}}\n\\label{${label}}\n\\includegraphics[width=\\textwidth]{figure-${fig_count}.${fileExt}}\n\\end{figure}`;
+    return `\\begin{figure}[p]\n\\includegraphics[width=\\textwidth]{figure-${fig_count}.${fileExt}}\n\\caption{${formatText(caption)}}\n\\label{fig:${label}}\n\\end{figure}`;
 }
 
 function renderCodeBlock(match, capture){
