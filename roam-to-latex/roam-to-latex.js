@@ -485,7 +485,7 @@ function cleanUpHref(match, url, text){
     return `\\href{${target}}{${text}}`;
 }
 
-function renderFigure(match, desc, url){
+function renderFigure(match, label, url, caption){
     fig_count += 1;
     fig_URLs.push(url);
 
@@ -495,7 +495,7 @@ function renderFigure(match, desc, url){
     let fileExt = fileInfo[0][1];
     fig_types.push(fileExt);
 
-    return `\\begin{figure}[p]\n\\caption{${desc}}\n\\includegraphics[width=\\textwidth]{figure-${fig_count}.${fileExt}}\n\\end{figure}`;
+    return `\\begin{figure}[p]\n\\caption{${formatText(caption)}}\n\\label{${label}}\n\\includegraphics[width=\\textwidth]{figure-${fig_count}.${fileExt}}\n\\end{figure}`;
 }
 
 function renderCodeBlock(match, capture){
@@ -528,11 +528,8 @@ function formatText(string){
 
     // DELETING ELEMENTS : iframe, word-count, block part
 
-    let deleteElems = ["iframe", "word\\-count", "=:"];
-    deleteElems.forEach(el => {
-        let elRegex = new RegExp(`\{\{(\[\[)?${el}(\]\])?([^\}]+?)?\}\}`, "g");
-        output = output.replaceAll(elRegex, "");
-    })
+    let doubleBracesRegex = /\{\{(.+?)\}\}/g;
+    output = output.replaceAll(doubleBracesRegex, (match, capture) => (capture.includes("iframe") || capture.includes("word-count") || capture.includes("=:")) ? `` : `${match}`);
 
     // REPLACING ELEMENTS
 
@@ -551,8 +548,8 @@ function formatText(string){
     output = output.replaceAll(aliasRegex, ` \\href{$2}{$1}`);
 
     // Image links markup
-    let imageRegex = /!\[(.+?)?\]\((.+?)\)/g;
-    output = output.replaceAll(imageRegex, (match, p1, p2) => renderFigure(match, desc = p1, url = p2));
+    let imageRegex = /!\[(.+?)?\]\((.+?)\)(.+)/g;
+    output = output.replaceAll(imageRegex, (match, p1, p2, p3) => renderFigure(match, label = p1, url = p2, caption = p3));
 
     // Code blocks
     let codeBlockRegex = /```([\s\S]+?)```/g;
@@ -565,6 +562,10 @@ function formatText(string){
     // Tags : will be removed
     let tagRegex = /(?:^| )\#(.+?)( |$)/g;
     output = output.replaceAll(tagRegex, "");
+
+    // Figure references
+    let figRefRegex = /\{\{fig:(.+?)\}\}/g;
+    output = output.replaceAll(figRefRegex, (match, capture) => `\\ref{fig:${capture}}`);
 
     // ESCAPING SPECIAL CHARACTERS --------------
 
@@ -604,7 +605,6 @@ function formatText(string){
     // + video embed/pdf embed ?
     // + clean up calc/etc. ?
     // + attributes ?
-    // + code (inline + block)
     // strikethrough : seems like this requires an external package, so leaving it aside for now
 
     return output;
