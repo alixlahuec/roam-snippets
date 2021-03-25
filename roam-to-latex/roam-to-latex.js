@@ -16,21 +16,22 @@
 
 // Load the lightweight client-zip library
 var s = document.createElement('script');
-s.src = "https://unpkg.com/client-zip@2.0.0/index.js";
-s.type = "text/javascript";
+s.innerHTML = `import { downloadZip } from "https://unpkg.com/client-zip@2.0.0/index.js";`;
+s.type = "module";
+s.async = true;
 document.getElementsByTagName("head")[0].appendChild(s);
-
-// Setup the UI
-createOverlayDialog();
-setupExportOverlay();
-addExportButton();
-window.addEventListener("hashchange", addExportButton);
 
 // Global variables to keep track of figures
 fig_count = 0;
 fig_URLs = [];
 fig_types = [];
 fig_blob = null;
+
+// Setup the UI
+createOverlayDialog();
+setupExportOverlay();
+addExportButton();
+window.addEventListener("hashchange", addExportButton);
 
 // FUNCTIONS ------
 
@@ -223,7 +224,7 @@ async function getFigures(){
     if(fig_count > 0){
         let figs = [];
         fig_URLs.forEach( (url, i) => {
-            calls.push({name: `figure-${i}.${fig_types[i]}`, input:fetch(url, {method: 'GET'})});
+            figs.push({name: `figure-${i}.${fig_types[i]}`, input:fetch(url, {method: 'GET'})});
         });
 
         let blob = await downloadZip(figs).blob();
