@@ -279,7 +279,7 @@ function convertBlocks(arr, {document_class = "book", numbered = true, start_hea
             }
         } else{
             // If the block isn't a heading, stop using the header tree for recursion
-            output = `${output}\n${parseBlock(block)}`;
+            output = `${output}\n${parseBlock(block)}\\\\`;
         }
     });
     if(output.slice(-2) == "\\\\"){
@@ -470,10 +470,11 @@ function renderPageEmbed(title){
     return `${pageContents.title}\\${(pageContents.children) ? pageContents.children.map(child => renderRaw(child)).join("\n") : ""}`;
 }
 
-function renderMathMode(match, capture){
+function renderMathMode(match, capture, offset){
     let mathContent = capture;
+    let spacing = (offset == 0) ? `\n` : ``;
 
-    return `$${mathContent.replaceAll(/\\\&/g, "&")}$`;
+    return `${spacing}$${mathContent.replaceAll(/\\\&/g, "&")}$`;
 }
 
 function cleanUpHref(match, url, text){
@@ -547,7 +548,7 @@ function formatText(string){
     // Alias links markup
     // Note : this regex matches any []() link structure that is either at the start of the string, or preceded by a character that isn't ! (that's image markup)
     let aliasRegex = /(?:^|[^!])\[(.+?)\]\((.+?)\)/g;
-    output = output.replaceAll(aliasRegex, `\\href{$2}{$1}`);
+    output = output.replaceAll(aliasRegex, ` \\href{$2}{$1}`);
 
     // Image links markup
     let imageRegex = /!\[(.+?)?\]\((.+?)\)/g;
@@ -576,7 +577,7 @@ function formatText(string){
     // Clean up wrong escapes
     // Math mode :
     let mathRegex = /\$\$([\s\S^\$]+?)\$\$/g;
-    output = output.replaceAll(mathRegex, (match, capture) => renderMathMode(match, capture));
+    output = output.replaceAll(mathRegex, (match, capture, offset) => renderMathMode(match, capture, offset));
     // URLs :
     let urlRegex = /\\href\{(.+?)\}\{(.+?)\}/g;
     output = output.replaceAll(urlRegex, (match, p1, p2) => cleanUpHref(match, url = p1, text = p2));
