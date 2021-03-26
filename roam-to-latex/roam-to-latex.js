@@ -488,7 +488,7 @@ function renderMathMode(match, capture, label, offset){
         }
         return `\n\\begin{equation}\n${eqLabel}${capture}\n\\end{equation}`;
     } else{
-        return `$${mathContent.replaceAll(/\\\&/g, "&")}$`;
+        return `$${mathContent.replaceAll(/\\\&/g, "&")}$${formatText(label)}`;
     }
 }
 
