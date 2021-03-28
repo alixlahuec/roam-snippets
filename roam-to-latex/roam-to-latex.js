@@ -558,7 +558,7 @@ function formatText(string){
     // REPLACING ELEMENTS
 
     // Page aliases
-    let pageAliasRegex = /\[(.+?)\]\(\[\[(.+?)\]\]\)/g;
+    let pageAliasRegex = /\[([^\]]+?)\]\(\[\[(.+?)\]\]\)/g;
     output = output.replaceAll(pageAliasRegex, `$1`);
 
     // Page references
