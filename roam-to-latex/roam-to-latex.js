@@ -156,13 +156,14 @@ function setupExportOverlay(){
 function addExportButton(){
     if(location.href.includes("/page/")){
         let titleElement = document.querySelector('h1.rm-title-display') || false;
-        if(titleElement){
+        let parentElement = titleElement ? titleElement.closest('div') : (document.querySelector('.rm-zoom.zoom-path-view') || false);
+        if(parentElement){
             let exportButton = document.createElement('button');
             exportButton.id = "roam-to-latex-btn";
             exportButton.classList.add("bp3-button");
             exportButton.classList.add("bp3-small");
             exportButton.innerHTML = `<span class="bp3-button-text">Export to LaTeX</span>`;
-            titleElement.closest('div').appendChild(exportButton);
+            parentElement.appendChild(exportButton);
             document.querySelector("#roam-to-latex-btn").addEventListener("click", function(){ toggleExportOverlay("show") });
         }
     }
@@ -248,15 +249,15 @@ async function getFigures(){
 
 // Basic structure taken from https://github.com/mundimark/markdown-vs-latex
 function createTEX(document_class = "book", {numbered = true, cover = true, start_header = 1, authors = "", title = ""} = {}){
-    let roamPage = queryPageContentsByTitle(document.title);
+    let contents = queryBlockContents(uid = location.hash.match(/([^\/]+)$/g)[0]);
 
-    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\\usepackage{soul}\n\\usepackage{hyperref}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
+    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\\usepackage{soul}\n\\usepackage{hyperref}\n\\hypersetup{colorlinks=true}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
     
     fig_count = 0;
     fig_URLs = [];
 
     let body = ``;
-    body += convertBlocks(roamPage.children, {document_class: document_class, numbered: numbered, start_header: start_header});
+    body += convertBlocks(contents.children, {document_class: document_class, numbered: numbered, start_header: start_header});
 
     let footer = `\n\\end{document}`;
 
@@ -526,6 +527,12 @@ function renderCodeBlock(match, capture){
     return `\\begin{verbatim}\n${capture}\n\\end{verbatim}`;
 }
 
+function renderCitekeyList(first, list){
+    let fullList = first + list;
+    let citekeys = Array.from(fullList.matchAll(/(?:\[\[@)(.+?)(?:\]\])/g)).map(match => match[1]);
+    return `\\cite{${citekeys.join(", ")}}`;
+}
+
 // FORMATTER ---
 
 function formatText(string){
@@ -557,6 +564,12 @@ function formatText(string){
 
     // REPLACING ELEMENTS
 
+    // Citekeys
+    let citekeyListRegex = /\((.+?)(\[\[@.+?\]\])((?: ?[,;] ?\[\[@.+?\]\]){1,})(.*?)\)/g;
+    output = output.replaceAll(citekeyListRegex, (match, pre, first, list, post) => `(${pre}${renderCitekeyList(first,list)}${post})`);
+    let citekeyRegex = /(^|[^\#])\[\[@([^\]]+?)\]\]/g;
+    output = output.replaceAll(citekeyRegex, (match, pre, citekey) => `${pre}\\cite{${citekey}}`);
+
     // Page aliases
     let pageAliasRegex = /\[([^\]]+?)\]\(\[\[(.+?)\]\]\)/g;
     output = output.replaceAll(pageAliasRegex, `$1`);
@@ -583,8 +596,8 @@ function formatText(string){
     let tagRegex = /(?:^| )\#(.+?)( |$)/g;
     output = output.replaceAll(tagRegex, "");
 
-    // In-text references (figures, equations)
-    let refRegex = /\{\{(fig|eq)\:(.+?)\}\}/g;
+    // In-text references (figures, equations, tables)
+    let refRegex = /\{\{(fig|eq|table)\:(.+?)\}\}/g;
     output = output.replaceAll(refRegex, (match, type, label) => `\\ref{${type}:${label}}`);
 
     // ESCAPING SPECIAL CHARACTERS --------------
