@@ -158,7 +158,7 @@ function createOverlayDialog(){
             exportForm.setAttribute('target', '_blank');
             exportForm.classList.add("bp3-fill");
             exportForm.innerHTML = `
-            <textarea name="snip" id="roam-to-latex-export-contents" readonly class="bp3-input bp3-small bp3-fill" style="max-height:200px;"></textarea>
+            <textarea name="snip" id="roam-to-latex-export-contents" readonly class="bp3-input bp3-small bp3-fill" style="height:200px;"></textarea>
             <input type="submit" value="Export to Overleaf" disabled>`;
             exportForm.style = "display:none;";
 
@@ -169,9 +169,9 @@ function createOverlayDialog(){
             // Add footer elements
             searchDialogFooter.innerHTML = `<div class="bp3-dialog-footer-actions">
                                                 <span class="bp3-popover2-target" tabindex="0">
-                                                    <a class="bp3-button roam-to-latex-export-bib">Download bibliography</a>
-                                                    <a class="bp3-button roam-to-latex-export-figures">Download figures</a>
-                                                    <a class="bp3-button roam-to-latex-export-tex">Download .tex file</a>
+                                                    <a class="bp3-button bp3-disabled bp3-outlined roam-to-latex-export-bib">Download bibliography</a>
+                                                    <a class="bp3-button bp3-disabled bp3-outlined roam-to-latex-export-figures">Download figures</a>
+                                                    <a class="bp3-button bp3-disabled bp3-outlined roam-to-latex-export-tex">Download .tex file</a>
                                                 </span>
                                             </div>`
         
@@ -224,12 +224,13 @@ function clearExportElements(){
     if(bib_blob != null){ URL.revokeObjectURL(bib_blob) };
     if(tex_blob != null){ URL.revokeObjectURL(tex_blob) };
     try{
-        document.querySelector('.roam-to-latex-export-figures').removeAttribute('download');
-        document.querySelector('.roam-to-latex-export-figures').removeAttribute('href');
-        document.querySelector('.roam-to-latex-export-bib').removeAttribute('download');
-        document.querySelector('.roam-to-latex-export-bib').removeAttribute('href');
-        document.querySelector('.roam-to-latex-export-tex').removeAttribute('download');
-        document.querySelector('.roam-to-latex-export-text').removeAttribute('href');
+        ["figures", "bib", "tex"].forEach(className => {
+            document.querySelector(`.roam-to-latex-export-${className}`).removeAttribute('download');
+            document.querySelector(`.roam-to-latex-export-${className}`).removeAttribute('href');
+            document.querySelector(`.roam-to-latex-export-${className}`).classList.add('bp3-disabled');
+        });
+        document.querySelector('.roam-to-latex-export-figures').innerHTML = "Download figures";
+        document.querySelector('.roam-to-latex-export-bib').innerHTML = "Download bibliography";
     } catch(e){};
     
 }
@@ -268,6 +269,7 @@ async function startExport(){
     let downloadButton = document.querySelector('.roam-to-latex-export-tex');
     downloadButton.download = `${title}.tex`;
     downloadButton.href = tex_blob;
+    downloadButton.classList.remove("bp3-disabled");
     
     document.querySelector("#roam-to-latex-export-form input[type='submit']").removeAttribute('disabled');
     document.querySelector("#roam-to-latex-export-form").style.display = "block";
@@ -292,6 +294,7 @@ async function getFigures(){
         downloadButton.innerHTML = `Download figures (${fig_count})`;
         downloadButton.download = "figures.zip";
         downloadButton.href = fig_blob;
+        downloadButton.classList.remove("bp3-disabled");
     }
     
 }
@@ -306,26 +309,37 @@ async function createTEX(document_class = "book", {numbered = true, cover = true
     // Scan for citations
     let citekeys = getCitekeysList(entity = contents);
     let bibliography = ``;
-    if(citekeys.length > 0){
-        bibliography = await makeBibliography(citekeys, {include: "biblatex"});
-        bib_blob = URL.createObjectURL(new Blob([bibliography], {type: 'text/plain'}));
-
-        let downloadButton = document.querySelector('.roam-to-latex-export-bib');
-        downloadButton.innerHTML = `Download bibliography (${citekeys.length} entries)`;
-        downloadButton.download = "bibliography.bib";
-        downloadButton.href = bib_blob;
+    if(typeof(zoteroRoam) !== 'undefined' && zoteroRoam.data.items.length > 0){
+        if(citekeys.length > 0){
+            try{
+                bibliography = await makeBibliography(citekeys, {include: "biblatex"});
+                bib_blob = URL.createObjectURL(new Blob([bibliography], {type: 'text/plain'}));
+    
+                let downloadButton = document.querySelector('.roam-to-latex-export-bib');
+                downloadButton.innerHTML = `Download bibliography (${citekeys.length} entries)`;
+                downloadButton.download = "bibliography.bib";
+                downloadButton.href = bib_blob;
+                downloadButton.classList.remove("bp3-disabled");
+            }catch(e){
+                alert(`There was an error while preparing the bibliography :\n${e}`);
+            }
+        }
     }
 
     let bibPreamble = bibliography.length > 0 ? `\\usepackage[\nbackend=biber,\nstyle=apa,\nsorting=nyt]{biblatex}\n\\addbibresource{bibliography.bib}\n` : ``;
     let bibPrint = bibliography.length > 0 ? `\\medskip\n\n\\printbibliography\n` : ``;
 
-    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\\usepackage{soul}\n${bibPreamble}\\usepackage{hyperref}\n\\hypersetup{colorlinks=true}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
+    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\\usepackage{soul}\n${bibPreamble}\\usepackage{hyperref}\n\\hypersetup{colorlinks=true,citecolor=black}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
     
     fig_count = 0;
     fig_URLs = [];
 
     let body = ``;
-    body += convertBlocks(contents.children, {document_class: document_class, numbered: numbered, start_header: start_header});
+    try{
+        body += convertBlocks(contents.children, {document_class: document_class, numbered: numbered, start_header: start_header});
+    }catch(e){
+        alert(`There was an error while processing the contents of the export :\n${e}`);
+    }
 
     let footer = `\n${bibPrint}\\end{document}`;
 
