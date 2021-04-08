@@ -45,7 +45,9 @@ let embedPageRegex = /\{{2}(\[\[)?embed(\]\])?: ?\[\[(.+?)\]\]\}{2}/g;
 let doubleParRegex = /\(\(([^\(\)]+?)\)\)/g;
 let doubleBracesRegex = /\{\{(.+?)\}\}/g;
 // Citekeys ---------------
+let refCitekeyRegex = /\[\[@(.+?)\]\]/g;
 let citekeyListRegex = /\((.+?)(\[\[@.+?\]\])((?: ?[,;] ?\[\[@.+?\]\]){1,})(.*?)\)/g;
+let citekeyParRegex = /\(([^\)]*?)\[\[@([^\)]+?)\]\]([^\)]*?)\)/g;
 let citekeyRegex = /(^|[^\#])\[\[@([^\]]+?)\]\]/g;
 // Images -----------------
 let imageRegex = /!\[(.+?)?\]\((.+?)\)(.+)/g;
@@ -262,6 +264,7 @@ async function startExport(){
     let contentsArea = document.querySelector('#roam-to-latex-export-contents');
     contentsArea.value = texOutput;
 
+    tex_blob = URL.createObjectURL(new Blob([texOutput], {type: 'text/plain'}));
     let downloadButton = document.querySelector('.roam-to-latex-export-tex');
     downloadButton.download = `${title}.tex`;
     downloadButton.href = tex_blob;
@@ -313,7 +316,7 @@ async function createTEX(document_class = "book", {numbered = true, cover = true
         downloadButton.href = bib_blob;
     }
 
-    let bibPreamble = bibliography.length > 0 ? `\\usepackage[\nbackend=biber,\nstyle=alphabetic,\nsorting=ynt]{biblatex}\n\\addbibresource{bibliography.bib}\n` : ``;
+    let bibPreamble = bibliography.length > 0 ? `\\usepackage[\nbackend=biber,\nstyle=apa,\nsorting=nyt]{biblatex}\n\\addbibresource{bibliography.bib}\n` : ``;
     let bibPrint = bibliography.length > 0 ? `\\medskip\n\n\\printbibliography\n` : ``;
 
     let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\\usepackage{soul}\n${bibPreamble}\\usepackage{hyperref}\n\\hypersetup{colorlinks=true}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
@@ -642,8 +645,12 @@ function formatText(string){
 
     // REPLACING ELEMENTS
     // Citekeys
+    // Lists within parentheses
     output = output.replaceAll(citekeyListRegex, (match, pre, first, list, post) => `(${pre}${renderCitekeyList(first,list)}${post})`);
-    output = output.replaceAll(citekeyRegex, (match, pre, citekey) => `${pre}\\cite{${citekey}}`);
+    // Citations within parentheses
+    output = output.replaceAll(citekeyParRegex, (match, pre, citekey, post) => `(${pre}\\cite{${citekey}}${post})`);
+    // Inline citations
+    output = output.replaceAll(citekeyRegex, (match, pre, citekey) => `${pre}\\textcite{${citekey}}`);
     // Page aliases
     output = output.replaceAll(pageAliasRegex, `$1`);
     // Page references
