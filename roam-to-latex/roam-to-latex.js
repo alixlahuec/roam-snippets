@@ -26,6 +26,46 @@ fig_URLs = [];
 fig_types = [];
 fig_blob = null;
 
+// Blob for the bib & tex files
+bib_blob = null;
+tex_blob = null;
+
+// List of RegEx for identifying various elements uniformly across functions
+// Aliases-----------------
+// ---All
+// Note : this regex matches any []() link structure that is either at the start of the string, or preceded by a character that isn't ! (that's image markup)
+let aliasRegex = /(?:^|[^!])\[(.+?)\]\((.+?)\)/g;
+// ---Internal
+let blockAliasRegex = / \[(.+?)\]\(\(\((.+?)\)\)\)/g;
+let pageAliasRegex = /\[([^\]]+?)\]\(\[\[(.+?)\]\]\)/g;
+// Embeds -----------------
+let embedBlockRegex = /\{{2}(\[\[)?embed(\]\])?: ?\(\((.+?)\)\)\}{2}/g;
+let embedPageRegex = /\{{2}(\[\[)?embed(\]\])?: ?\[\[(.+?)\]\]\}{2}/g;
+// (()) + {{}} ------------
+let doubleParRegex = /\(\(([^\(\)]+?)\)\)/g;
+let doubleBracesRegex = /\{\{(.+?)\}\}/g;
+// Citekeys ---------------
+let citekeyListRegex = /\((.+?)(\[\[@.+?\]\])((?: ?[,;] ?\[\[@.+?\]\]){1,})(.*?)\)/g;
+let citekeyRegex = /(^|[^\#])\[\[@([^\]]+?)\]\]/g;
+// Images -----------------
+let imageRegex = /!\[(.+?)?\]\((.+?)\)(.+)/g;
+// Code ------------------
+// ---Code blocks
+let codeBlockRegex = /```([\s\S]+?)```/g;
+// ---Inline code
+let codeInlineRegex = /(?:^|[^`])`([^`]+?)`/g;
+// Tags -------------------
+let tagRegex = /(?:^| )\#(.+?)( |$)/g;
+// Math mode --------------
+let mathRegex = /\$\$([\s\S^\$]+?)\$\$([\s\S]+)?/g;
+// Text formatting --------
+// ---Bold
+let boldRegex = /\*{2}([^\*]+?)\*{2}/g;
+// ---Italic
+let italicRegex = /_{2}([^_]+?)_{2}/g;
+// ---Highlight
+let highlightRegex = /\^{2}([^\^]+?)\^{2}/g;
+
 // Setup the UI
 createOverlayDialog();
 setupExportOverlay();
@@ -116,7 +156,7 @@ function createOverlayDialog(){
             exportForm.setAttribute('target', '_blank');
             exportForm.classList.add("bp3-fill");
             exportForm.innerHTML = `
-            <textarea name="snip" id="roam-to-latex-export-contents" class="bp3-input bp3-small bp3-fill" style="min-height:400px;"></textarea>
+            <textarea name="snip" id="roam-to-latex-export-contents" readonly class="bp3-input bp3-small bp3-fill" style="max-height:200px;"></textarea>
             <input type="submit" value="Export to Overleaf" disabled>`;
             exportForm.style = "display:none;";
 
@@ -127,10 +167,9 @@ function createOverlayDialog(){
             // Add footer elements
             searchDialogFooter.innerHTML = `<div class="bp3-dialog-footer-actions">
                                                 <span class="bp3-popover2-target" tabindex="0">
+                                                    <a class="bp3-button roam-to-latex-export-bib">Download bibliography</a>
                                                     <a class="bp3-button roam-to-latex-export-figures">Download figures</a>
-                                                    <button type="button" class="roam-to-latex-export-tex bp3-button">
-                                                    <span class="bp3-button-text">Export to .tex file</span>
-                                                    </button>
+                                                    <a class="bp3-button roam-to-latex-export-tex">Download .tex file</a>
                                                 </span>
                                             </div>`
         
@@ -180,9 +219,15 @@ function clearExportElements(){
     fig_URLs = [];
     fig_types = [];
     if(fig_blob != null){ URL.revokeObjectURL(fig_blob) };
+    if(bib_blob != null){ URL.revokeObjectURL(bib_blob) };
+    if(tex_blob != null){ URL.revokeObjectURL(tex_blob) };
     try{
-        document.querySelector('roam-to-latex-export-figures').removeAttribute('download');
-        document.querySelector('roam-to-latex-export-figures').removeAttribute('href');
+        document.querySelector('.roam-to-latex-export-figures').removeAttribute('download');
+        document.querySelector('.roam-to-latex-export-figures').removeAttribute('href');
+        document.querySelector('.roam-to-latex-export-bib').removeAttribute('download');
+        document.querySelector('.roam-to-latex-export-bib').removeAttribute('href');
+        document.querySelector('.roam-to-latex-export-tex').removeAttribute('download');
+        document.querySelector('.roam-to-latex-export-text').removeAttribute('href');
     } catch(e){};
     
 }
@@ -216,11 +261,14 @@ async function startExport(){
     // Display results, and enable action buttons
     let contentsArea = document.querySelector('#roam-to-latex-export-contents');
     contentsArea.value = texOutput;
+
+    let downloadButton = document.querySelector('.roam-to-latex-export-tex');
+    downloadButton.download = `${title}.tex`;
+    downloadButton.href = tex_blob;
     
     document.querySelector("#roam-to-latex-export-form input[type='submit']").removeAttribute('disabled');
     document.querySelector("#roam-to-latex-export-form").style.display = "block";
 
-    // TODO: stuff to enable the "Download as .tex" and other download buttons
 }
 
 async function getFigures(){
@@ -249,9 +297,26 @@ async function getFigures(){
 
 // Basic structure taken from https://github.com/mundimark/markdown-vs-latex
 function createTEX(document_class = "book", {numbered = true, cover = true, start_header = 1, authors = "", title = ""} = {}){
-    let contents = queryBlockContents(uid = location.hash.match(/([^\/]+)$/g)[0]);
+    let exportUID = location.hash.match(/([^\/]+)$/g)[0];
+    let contents = queryBlockContents(uid = exportUID);
 
-    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\\usepackage{soul}\n\\usepackage{hyperref}\n\\hypersetup{colorlinks=true}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
+    // Scan for citations
+    let citekeys = getCitekeysList(entity = contents);
+    let bibliography = ``;
+    if(citekeys.length > 0){
+        bibliography = await makeBibliography(citekeys, {include: "biblatex"});
+        bib_blob = URL.createObjectURL(new Blob([bibliography], {type: 'text/plain'}));
+
+        let downloadButton = document.querySelector('.roam-to-latex-export-bib');
+        downloadButton.innerHTML = `Download bibliography (${citekeys.length} entries)`;
+        downloadButton.download = "bibliography.bib";
+        downloadButton.href = bib_blob;
+    }
+
+    let bibPreamble = bibliography.length > 0 ? `\\usepackage[\nbackend=biber,\nstyle=alphabetic,\nsorting=ynt]{biblatex}\n\\addbibresource{bibliography.bib}\n` : ``;
+    let bibPrint = bibliography.length > 0 ? `\\medskip\n\n\\printbibliography\n` : ``;
+
+    let header = `\n\\documentclass{${document_class}}\n\\title{${title}}\n\\author{${authors}}\n\\date{${todayDMY()}}\n\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\\usepackage{soul}\n${bibPreamble}\\usepackage{hyperref}\n\\hypersetup{colorlinks=true}\n\n\\begin{document}\n${cover ? "\\maketitle" : ""}`;
     
     fig_count = 0;
     fig_URLs = [];
@@ -259,7 +324,7 @@ function createTEX(document_class = "book", {numbered = true, cover = true, star
     let body = ``;
     body += convertBlocks(contents.children, {document_class: document_class, numbered: numbered, start_header: start_header});
 
-    let footer = `\n\\end{document}`;
+    let footer = `\n${bibPrint}\\end{document}`;
 
     return `${header}\n${body}\n${footer}`;
 }
@@ -442,39 +507,62 @@ function renderRaw(block, start_indent = 0){
     return output;
 }
 
-function renderDoublePar(content){
+function renderDoublePar(content, mode = "raw"){
     // Check if content is a valid block reference
-    let isBlockRef = roamAlphaAPI.q('[:find ?id :in $ ?uid :where[?id :block/uid ?uid]]', content).length > 0;
+    let isBlockRef = roamAlphaAPI.q('[:find [?b ?text] :in $ ?uid :where[?b :block/uid ?uid][?b :block/string ?text]]', content);
     // If it's a block ref, render its contents
-    if(isBlockRef){
-        return renderBlockRef(content);
+    if(isBlockRef.length > 0){
+        switch(mode){
+            case "latex":
+                return renderBlockRef(uid = content);
+            case "raw":
+            default:
+                return grabRawText({string: isBlockRef[1]});
+        }
     } else{
-        // In Roam, it's invalid to insert any aliases in a `(())` so no need to handle that case here
-        // If the `(())` just contains text, render it as footnote
-        return `\\footnote{${content}}`;
+        switch(mode){
+            case "latex":
+                // In Roam, it's invalid to insert any aliases in a `(())` so no need to handle that case here
+                // If the `(())` just contains text, render it as footnote
+                return `\\footnote{${content}}`;
+            case "raw":
+            default:
+                return content;
+        }
     }
 }
 
 // RAW only
 function renderBlockRef(uid){
-    let blockString = roamAlphaAPI.q('[:find ?str :in $ ?uid :where[?b :block/uid ?uid][?b :block/string ?str]]', uid);
-    // Do stuff to find any block references within the block, and render them
-    return blockString;
+    // Return the block's raw string contents
+    return roamAlphaAPI.q('[:find ?str :in $ ?uid :where[?b :block/uid ?uid][?b :block/string ?str]]', uid);
 }
 
 // RAW only
-function renderBlockEmbed(uid){
+function renderBlockEmbed(uid, mode = "raw"){
     let blockContents = queryBlockContents(uid);
-    // TODO: handle processing of actual block structure
-    // For now, just rendering everything as one raw block to test basic parsing
-    return renderRaw(blockContents);
+    switch(mode){
+        case "latex":
+            // TODO: handle processing of actual block structure
+            // For now, just rendering everything as one raw block to test basic parsing
+            return renderRaw(blockContents);
+        case "raw":
+        default:
+            return grabRawText(blockContents);
+    }
 }
 // RAW only
-function renderPageEmbed(title){
+function renderPageEmbed(title, mode = "raw"){
     let pageContents = queryPageContentsByTitle(title);
-    // TODO: handle actual processing of actual page structure
-    // For now, just rendering everything as one raw block to test basic parsing
-    return `${pageContents.title}\\${(pageContents.children) ? pageContents.children.map(child => renderRaw(child)).join("\n") : ""}`;
+    switch(mode){
+        case "latex":
+            // TODO: handle actual processing of actual page structure
+            // For now, just rendering everything as one raw block to test basic parsing
+            return `${pageContents.title}\\${(pageContents.children) ? pageContents.children.map(child => renderRaw(child)).join("\n") : ""}`;
+        case "raw":
+        default:
+            return grabRawText(pageContents);
+    }
 }
 
 function renderMathMode(match, capture, label, offset){
@@ -540,60 +628,35 @@ function formatText(string){
 
     // RENDERING BLOCK + PAGE REFS/EMBEDS, DOUBLE PARENTHESES ---------
     // Aka, is there additional text content that needs to be pulled ?
-
     // Block aliases
-    let blockAliasRegex = / \[(.+?)\]\(\(\((.+?)\)\)\)/g;
     output = output.replaceAll(blockAliasRegex, (match, p1, p2) => `${p1} \\footnote{${renderBlockRef(uid = p2)}}`);
-
     // Embeds : blocks
-    let embedBlockRegex = /\{{2}(\[\[)?embed(\]\])?: ?\(\((.+?)\)\)\}{2}/g;
-    output = output.replaceAll(embedBlockRegex, (match, p1, p2, p3) => renderBlockEmbed(uid = p3));
-
+    output = output.replaceAll(embedBlockRegex, (match, p1, p2, p3) => renderBlockEmbed(uid = p3, mode = "latex"));
     // Embeds : pages
-    let embedPageRegex = /\{{2}(\[\[)?embed(\]\])?: ?\[\[(.+?)\]\]\}{2}/g;
-    output = output.replaceAll(embedPageRegex, (match, p1, p2, p3) => renderPageEmbed(title = p3));
-
+    output = output.replaceAll(embedPageRegex, (match, p1, p2, p3) => renderPageEmbed(title = p3, mode = "latex"));
     // `(())` markup
-    let doubleParRegex = /\(\(([^\(\)]+?)\)\)/g;
-    output = output.replaceAll(doubleParRegex, (match, p1) => renderDoublePar(content = p1));
+    output = output.replaceAll(doubleParRegex, (match, p1) => renderDoublePar(content = p1, mode = "latex"));
 
     // DELETING ELEMENTS : iframe, word-count, block part
-
-    let doubleBracesRegex = /\{\{(.+?)\}\}/g;
     output = output.replaceAll(doubleBracesRegex, (match, capture) => (capture.includes("iframe") || capture.includes("word-count") || capture.includes("=:")) ? `` : `${match}`);
 
     // REPLACING ELEMENTS
-
     // Citekeys
-    let citekeyListRegex = /\((.+?)(\[\[@.+?\]\])((?: ?[,;] ?\[\[@.+?\]\]){1,})(.*?)\)/g;
     output = output.replaceAll(citekeyListRegex, (match, pre, first, list, post) => `(${pre}${renderCitekeyList(first,list)}${post})`);
-    let citekeyRegex = /(^|[^\#])\[\[@([^\]]+?)\]\]/g;
     output = output.replaceAll(citekeyRegex, (match, pre, citekey) => `${pre}\\cite{${citekey}}`);
-
     // Page aliases
-    let pageAliasRegex = /\[([^\]]+?)\]\(\[\[(.+?)\]\]\)/g;
     output = output.replaceAll(pageAliasRegex, `$1`);
-
     // Page references
     // Note: this will remove all instances of `[[` and `]]`, even if they're not page references.
     let pageRefRegex = /(\[\[|\]\])/g;
     output = output.replaceAll(pageRefRegex, "");
-
     // Alias links markup
-    // Note : this regex matches any []() link structure that is either at the start of the string, or preceded by a character that isn't ! (that's image markup)
-    let aliasRegex = /(?:^|[^!])\[(.+?)\]\((.+?)\)/g;
     output = output.replaceAll(aliasRegex, ` \\href{$2}{$1}`);
-
     // Image links markup
-    let imageRegex = /!\[(.+?)?\]\((.+?)\)(.+)/g;
     output = output.replaceAll(imageRegex, (match, p1, p2, p3) => renderFigure(match, caption = p1, url = p2, extra = p3));
-
     // Code blocks
-    let codeBlockRegex = /```([\s\S]+?)```/g;
     output = output.replaceAll(codeBlockRegex, (match, capture) => renderCodeBlock(match, capture));
-
     // Tags : will be removed
-    let tagRegex = /(?:^| )\#(.+?)( |$)/g;
     output = output.replaceAll(tagRegex, "");
 
     // In-text references (figures, equations, tables)
@@ -610,36 +673,26 @@ function formatText(string){
 
     // Clean up wrong escapes
     // Math mode :
-    let mathRegex = /\$\$([\s\S^\$]+?)\$\$([\s\S]+)?/g;
     output = output.replaceAll(mathRegex, (match, capture, label, offset) => renderMathMode(match, capture, label, offset));
     // URLs :
     let urlRegex = /\\href\{(.+?)\}\{(.+?)\}/g;
     output = output.replaceAll(urlRegex, (match, p1, p2) => cleanUpHref(match, url = p1, text = p2));
-
     // Inline code
-    let codeInlineRegex = /`(.+?)`/g;
     output = output.replaceAll(codeInlineRegex, (match, capture) => `\\verb|${capture}|`);
 
     // FORMATTING ACTUAL TEXT -------------------
-
     // Blockquote
     if(output.charAt(0) == ">"){
         output = `\\begin{quote}${output.slice(start = 1)}\\end{quote}`;
     }
-
     // Bold markup
-    let boldRegex = /\*{2}([^\*]+?)\*{2}/g;
     output = output.replaceAll(boldRegex, `\\textbf{$1}`);
     // Italic markup
-    let italicRegex = /_{2}([^_]+?)_{2}/g;
     output = output.replaceAll(italicRegex, `\\textit{$1}`);
     // Highlight markup
-    let highlightRegex = /\^{2}([^\^]+?)\^{2}/g;
     output = output.replaceAll(highlightRegex, `\\hl{$1}`);
 
     // TODO:
-    // + citations, of course
-    // + video embed/pdf embed ?
     // + clean up calc/etc. ?
     // + attributes ?
     // strikethrough : seems like this requires an external package, so leaving it aside for now
@@ -690,4 +743,61 @@ function queryBlockContents(uid){
 
 function queryPageContentsByTitle(title){
     return roamAlphaAPI.q(`[:find [(pull ?e [ :node/title :block/string :block/children :block/order :block/heading :children/view-type :block/text-align {:block/children ...} ]) ...] :in $ ?ptitle :where [?e :node/title ?ptitle] ]`, title)[0];
+}
+
+// DEV : BIBLIOGRAPHY
+
+function grabRawText(block){
+    let output = block.string || "";
+    if(block.children){
+        output = `${output} ${block.children.map(child => grabRawText(child)).join(" ")}`
+    }
+    // Parse the text for any block references, or block/page embeds
+    // Block references (check all uses of parentheticals)
+    output = output.replaceAll(doubleParRegex, (match, p1) => renderDoublePar(content = p1, mode = "raw"));
+    // Block embeds
+    output = output.replaceAll(embedBlockRegex, (match, p1, p2, p3) => renderBlockEmbed(uid = p3, mode = "raw"));
+    // Page embeds
+    output = output.replaceAll(embedPageRegex, (match, p1, p2, p3) => renderPageEmbed(title = p3, mode = "raw"));
+    
+    return output;
+}
+
+// `entity` is the dictionary returned for the current page/current block (i.e, by queryBlockContents or queryPageContentsByTitle)
+// This function returns an Array containing all the (unique) citekey references contained in the entity's contents
+// TODO: should citekey tags also be included here ?
+function getCitekeysList(entity){
+    return [...new Set(Array.from(grabRawText(entity).matchAll(refCitekeyRegex)).map(regexmatch => regexmatch[1]))]
+}
+
+async function makeBibliography(citekeys, {include = "biblatex"} = {}){
+    // Get the full data for the Zotero items
+    let zoteroItems = citekeys.map(citekey => zoteroRoam.data.items.find(item => item.key == citekey));
+    let librariesToCall = [...new Set(zoteroItems.map(it => it.requestLabel))].map(lib => zoteroRoam.config.requests.find(req => req.name == lib));
+    // Make requests to the Zotero API for the bibliography entries of the items'
+    let apiCalls = [];
+    librariesToCall.forEach(lib => {
+        let libItemsToRequest = zoteroItems.filter(item => item.requestLabel == lib.name);
+        let zoteroKeys = libItemsToRequest.map(item => item.data.key);
+        let nbCalls = Math.ceil(zoteroKeys.length/50);
+        for(let i = 0; i < nbCalls; i++){
+            let keysList = zoteroKeys.slice(start = i*50, end = Math.min((i+1)*50, zoteroKeys.length)).join(",");
+            apiCalls.push(fetch(
+                `https://api.zotero.org/${lib.dataURI}?include=${include}&itemKey=${keysList}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Zotero-API-Key': lib.apikey,
+                        'Zotero-API-Version': 3
+                    }
+                }
+            ));
+        }
+    });
+    let bibResults = await Promise.all(apiCalls);
+    let bibEntries = await Promise.all(bibResults.map(data => data.json()));
+
+    let flatBibliography = bibEntries.flat(1).map(entry => entry[`${include}`]).sort().join("");
+
+    return flatBibliography;
 }
