@@ -253,7 +253,7 @@ async function startExport(){
     let start_header = Number(document.querySelector('#roam-to-latex-setting-start-header select').value);
 
     // Launch processing of page contents
-    let texOutput = createTEX(document_class = document_class, {numbered: numbered, cover: cover, start_header: start_header, authors: authors, title: title});
+    let texOutput = await createTEX(document_class = document_class, {numbered: numbered, cover: cover, start_header: start_header, authors: authors, title: title});
 
     // Prepare .zip of figures for download
     await getFigures();
@@ -296,7 +296,7 @@ async function getFigures(){
 // PARSER ---
 
 // Basic structure taken from https://github.com/mundimark/markdown-vs-latex
-function createTEX(document_class = "book", {numbered = true, cover = true, start_header = 1, authors = "", title = ""} = {}){
+async function createTEX(document_class = "book", {numbered = true, cover = true, start_header = 1, authors = "", title = ""} = {}){
     let exportUID = location.hash.match(/([^\/]+)$/g)[0];
     let contents = queryBlockContents(uid = exportUID);
 
