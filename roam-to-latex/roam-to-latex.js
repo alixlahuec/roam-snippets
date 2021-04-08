@@ -46,7 +46,7 @@ let doubleParRegex = /\(\(([^\(\)]+?)\)\)/g;
 let doubleBracesRegex = /\{\{(.+?)\}\}/g;
 // Citekeys ---------------
 let refCitekeyRegex = /\[\[@(.+?)\]\]/g;
-let citekeyListRegex = /\((.+?)(\[\[@.+?\]\])((?: ?[,;] ?\[\[@.+?\]\]){1,})(.*?)\)/g;
+let citekeyListRegex = /\((.*?)(\[\[@.+?\]\])((?: ?[,;] ?\[\[@.+?\]\]){1,})(.*?)\)/g;
 let citekeyParRegex = /\(([^\)]*?)\[\[@([^\)]+?)\]\]([^\)]*?)\)/g;
 let citekeyRegex = /(^|[^\#])\[\[@([^\]]+?)\]\]/g;
 // Images -----------------
