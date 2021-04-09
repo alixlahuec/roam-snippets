@@ -448,7 +448,7 @@ var roamToLatex = {};
         },
 
         async getFigures(){
-            if(fig_count > 0){
+            if(roamToLatex.output.figs.count > 0){
                 let calls = [];
                 roamToLatex.output.figs.URLs.forEach( (url, i) => {
                     calls.push(fetch(url, {method: 'GET'}));
