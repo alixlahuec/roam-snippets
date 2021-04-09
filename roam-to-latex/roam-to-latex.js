@@ -98,6 +98,7 @@ var roamToLatex = {};
                                                                 <a class="bp3-button bp3-disabled bp3-outlined roam-to-latex-export-bib">Download bibliography</a>
                                                                 <a class="bp3-button bp3-disabled bp3-outlined roam-to-latex-export-figures">Download figures</a>
                                                                 <a class="bp3-button bp3-disabled bp3-outlined roam-to-latex-export-tex">Download .tex file</a>
+                                                                <a class="bp3-button bp3-intent-primary bp3-disabled bp3-outlined roam-to-latex-export-package">Download all files</a>
                                                             </span>
                                                         </div>`
                     
@@ -158,7 +159,7 @@ var roamToLatex = {};
                 if(roamToLatex.output.bib.blob != null){ roamToLatex.output.bib.blob = null; URL.revokeObjectURL(roamToLatex.output.bib.blobURL) };
                 if(roamToLatex.output.tex.blob != null){ roamToLatex.output.tex.blob = null; URL.revokeObjectURL(roamToLatex.output.tex.blobURL) };
                 try{
-                    ["figures", "bib", "tex"].forEach(className => {
+                    ["figures", "bib", "tex", "package"].forEach(className => {
                         document.querySelector(`.roam-to-latex-export-${className}`).removeAttribute('download');
                         document.querySelector(`.roam-to-latex-export-${className}`).removeAttribute('href');
                         document.querySelector(`.roam-to-latex-export-${className}`).classList.add('bp3-disabled');
@@ -415,6 +416,10 @@ var roamToLatex = {};
                 files: [],
                 blob: null,
                 blobURL: null
+            },
+            package: {
+                blob: null,
+                blobURL: null
             }
         },
 
@@ -443,6 +448,15 @@ var roamToLatex = {};
             downloadButton.download = `${title}.tex`;
             downloadButton.href = roamToLatex.output.tex.blobURL;
             downloadButton.classList.remove("bp3-disabled");
+
+            let packageFiles = [...roamToLatex.output.figs.files, roamToLatex.output.tex.blob];
+            if(roamToLatex.output.bib.blob != null){ packageFiles.push(roamToLatex.output.bib.blob) };
+            roamToLatex.output.package.blob = await downloadZip(packageFiles).blob();
+            roamToLatex.output.package.blobURL = URL.createObjectURL(roamToLatex.output.package.blob);
+            let packageButton = document.querySelector('.roam-to-latex-export-package');
+            packageButton.download = `${title}.zip`;
+            packageButton.href = roamToLatex.output.package.blobURL;
+            packageButton.classList.remove("bp3-disabled");
             
             document.querySelector("#roam-to-latex-export-form input[type='submit']").removeAttribute('disabled');
             document.querySelector("#roam-to-latex-export-form").style.display = "block";
