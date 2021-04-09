@@ -153,6 +153,7 @@ var roamToLatex = {};
                 roamToLatex.output.figs.count = 0;
                 roamToLatex.output.figs.URLs = [];
                 roamToLatex.output.figs.types = [];
+                roamToLatex.output.figs.files = [];
                 if(roamToLatex.output.figs.blob != null){ roamToLatex.output.figs.blob = null; URL.revokeObjectURL(roamToLatex.output.figs.blobURL) };
                 if(roamToLatex.output.bib.blob != null){ roamToLatex.output.bib.blob = null; URL.revokeObjectURL(roamToLatex.output.bib.blobURL) };
                 if(roamToLatex.output.tex.blob != null){ roamToLatex.output.tex.blob = null; URL.revokeObjectURL(roamToLatex.output.tex.blobURL) };
@@ -202,7 +203,7 @@ var roamToLatex = {};
             citekeyList: /\((.*?)(\[\[@.+?\]\])((?: ?[,;] ?\[\[@.+?\]\]){1,})(.*?)\)/g,
             citekeyPar: /\(([^\)]*?)\[\[@([^\)]+?)\]\]([^\)]*?)\)/g,
             citekey: /(^|[^\#])\[\[@([^\]]+?)\]\]/g,
-            image: /!\[(.+?)?\]\((.+?)\)(.+)/g,
+            image: /!\[(.*?)?\]\((.+?)\)(.*)/g,
             codeBlock: /```([\s\S]+?)```/g,
             codeInline: /(?:^|[^`])`([^`]+?)`/g,
             tag: /(?:^| )\#(.+?)( |$)/g,
@@ -411,6 +412,7 @@ var roamToLatex = {};
                 count: 0,
                 URLs: [],
                 types: [],
+                files: [],
                 blob: null,
                 blobURL: null
             }
@@ -456,9 +458,10 @@ var roamToLatex = {};
                 let figs = await Promise.all(calls);
                 figs = figs.map( (call, i) => {
                     return {name: `figure-${i+1}.${roamToLatex.output.figs.types[i]}`, input: call};
-                })
+                });
+                roamToLatex.output.figs.files = figs;
         
-                roamToLatex.output.figs.blob = await downloadZip(figs).blob();
+                roamToLatex.output.figs.blob = await downloadZip(roamToLatex.output.figs.files).blob();
                 roamToLatex.output.figs.blobURL = URL.createObjectURL(roamToLatex.output.figs.blob);
         
                 let downloadButton = document.querySelector('.roam-to-latex-export-figures');
