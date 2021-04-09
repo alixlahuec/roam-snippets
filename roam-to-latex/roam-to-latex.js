@@ -765,11 +765,11 @@ var roamToLatex = {};
             }
             // Parse the text for any block references, or block/page embeds
             // Block references (check all uses of parentheticals)
-            output = output.replaceAll(doubleParRegex, (match, p1) => roamToLatex.render.doublePar(content = p1, mode = "raw"));
+            output = output.replaceAll(roamToLatex.regex.doublePar, (match, p1) => roamToLatex.render.doublePar(content = p1, mode = "raw"));
             // Block embeds
-            output = output.replaceAll(embedBlockRegex, (match, p1, p2, p3) => roamToLatex.render.blockEmbed(uid = p3, mode = "raw"));
+            output = output.replaceAll(roamToLatex.regex.embedBlock, (match, p1, p2, p3) => roamToLatex.render.blockEmbed(uid = p3, mode = "raw"));
             // Page embeds
-            output = output.replaceAll(embedPageRegex, (match, p1, p2, p3) => roamToLatex.render.pageEmbed(title = p3, mode = "raw"));
+            output = output.replaceAll(roamToLatex.regex.embedPage, (match, p1, p2, p3) => roamToLatex.render.pageEmbed(title = p3, mode = "raw"));
             
             return output;
         }
