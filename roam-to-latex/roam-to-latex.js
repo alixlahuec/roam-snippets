@@ -788,4 +788,4 @@ var roamToLatex = {};
     roamToLatex.interface.addExportButton();
     window.addEventListener("hashchange", roamToLatex.interface.addExportButton);
 
-})
+})();
