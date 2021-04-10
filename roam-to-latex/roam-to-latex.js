@@ -155,6 +155,8 @@ var roamToLatex = {};
                 roamToLatex.output.figs.URLs = [];
                 roamToLatex.output.figs.types = [];
                 roamToLatex.output.figs.files = [];
+                roamToLatex.output.tex.content = ``;
+                roamToLatex.output.bib.content = ``;
                 if(roamToLatex.output.figs.blob != null){ roamToLatex.output.figs.blob = null; URL.revokeObjectURL(roamToLatex.output.figs.blobURL) };
                 if(roamToLatex.output.bib.blob != null){ roamToLatex.output.bib.blob = null; URL.revokeObjectURL(roamToLatex.output.bib.blobURL) };
                 if(roamToLatex.output.tex.blob != null){ roamToLatex.output.tex.blob = null; URL.revokeObjectURL(roamToLatex.output.tex.blobURL) };
@@ -204,7 +206,7 @@ var roamToLatex = {};
             citekeyList: /\((.*?)(\[\[@.+?\]\])((?: ?[,;] ?\[\[@.+?\]\]){1,})(.*?)\)/g,
             citekeyPar: /\(([^\)]*?)\[\[@([^\)]+?)\]\]([^\)]*?)\)/g,
             citekey: /(^|[^\#])\[\[@([^\]]+?)\]\]/g,
-            image: /!\[(.*?)?\]\((.+?)\)(.*)/g,
+            image: /!\[(.*?)\]\((.+?)\)(.*)/g,
             codeBlock: /```([\s\S]+?)```/g,
             codeInline: /(?:^|[^`])`([^`]+?)`/g,
             tag: /(?:^| )\#(.+?)( |$)/g,
@@ -402,10 +404,12 @@ var roamToLatex = {};
 
         output: {
             tex: {
+                content: ``,
                 blob: null,
                 blobURL: null
             },
             bib: {
+                content: ``,
                 blob: null,
                 blobURL: null
             },
@@ -434,29 +438,34 @@ var roamToLatex = {};
         
             // Launch processing of page contents
             let texOutput = await roamToLatex.createTEX(document_class = document_class, {numbered: numbered, cover: cover, start_header: start_header, authors: authors, title: title});
-        
+            roamToLatex.output.tex.content = texOutput;
+
             // Prepare .zip of figures for download
             await roamToLatex.getFigures();
         
             // Display results, and enable action buttons
             let contentsArea = document.querySelector('#roam-to-latex-export-contents');
-            contentsArea.value = texOutput;
+            contentsArea.value = roamToLatex.output.tex.content;
         
-            roamToLatex.output.tex.blob = new Blob([texOutput], {type: 'text/plain'});
+            roamToLatex.output.tex.blob = new Blob([roamToLatex.output.tex.content], {type: 'text/plain'});
             roamToLatex.output.tex.blobURL = URL.createObjectURL(roamToLatex.output.tex.blob);
             let downloadButton = document.querySelector('.roam-to-latex-export-tex');
             downloadButton.download = `${title}.tex`;
             downloadButton.href = roamToLatex.output.tex.blobURL;
             downloadButton.classList.remove("bp3-disabled");
 
-            let packageFiles = [...roamToLatex.output.figs.files, roamToLatex.output.tex.blob];
-            if(roamToLatex.output.bib.blob != null){ packageFiles.push(roamToLatex.output.bib.blob) };
-            roamToLatex.output.package.blob = await downloadZip(packageFiles).blob();
-            roamToLatex.output.package.blobURL = URL.createObjectURL(roamToLatex.output.package.blob);
-            let packageButton = document.querySelector('.roam-to-latex-export-package');
-            packageButton.download = `${title}.zip`;
-            packageButton.href = roamToLatex.output.package.blobURL;
-            packageButton.classList.remove("bp3-disabled");
+            try{
+                let packageFiles = [...roamToLatex.output.figs.files, {name: `${title}.tex`, input: roamToLatex.output.tex.content}];
+                if(roamToLatex.output.bib.blob != null){ packageFiles.push({name: "bibliography.bib", input: roamToLatex.output.bib.blob}) };
+                roamToLatex.output.package.blob = await downloadZip(packageFiles).blob();
+                roamToLatex.output.package.blobURL = URL.createObjectURL(roamToLatex.output.package.blob);
+                let packageButton = document.querySelector('.roam-to-latex-export-package');
+                packageButton.download = `${title}.zip`;
+                packageButton.href = roamToLatex.output.package.blobURL;
+                packageButton.classList.remove("bp3-disabled"); 
+            }catch(e){
+                console.log(e);
+            }
             
             document.querySelector("#roam-to-latex-export-form input[type='submit']").removeAttribute('disabled');
             document.querySelector("#roam-to-latex-export-form").style.display = "block";
@@ -498,7 +507,8 @@ var roamToLatex = {};
                 if(citekeys.length > 0){
                     try{
                         bibliography = await roamToLatex.utils.makeBibliography(citekeys, {include: "biblatex"});
-                        roamToLatex.output.bib.blob = new Blob([bibliography], {type: 'text/plain'});
+                        roamToLatex.output.bib.content = bibliography;
+                        roamToLatex.output.bib.blob = new Blob([roamToLatex.output.bib.content], {type: 'text/plain'});
                         roamToLatex.output.bib.blobURL = URL.createObjectURL(roamToLatex.output.bib.blob);
             
                         let downloadButton = document.querySelector('.roam-to-latex-export-bib');
@@ -524,6 +534,7 @@ var roamToLatex = {};
             try{
                 body += roamToLatex.convertBlocks(contents.children, {document_class: document_class, numbered: numbered, start_header: start_header});
             }catch(e){
+                console.log(e);
                 alert(`There was an error while processing the contents of the export :\n${e}`);
             }
         
