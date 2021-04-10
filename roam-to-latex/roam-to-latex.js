@@ -455,7 +455,16 @@ var roamToLatex = {};
             downloadButton.classList.remove("bp3-disabled");
 
             try{
-                let packageFiles = [...roamToLatex.output.figs.files, {name: `${title}.tex`, input: roamToLatex.output.tex.content}];
+                let calls = [];
+                roamToLatex.output.figs.URLs.forEach( (url, i) => {
+                    calls.push(fetch(url, {method: 'GET'}));
+                });
+                let figs = await Promise.all(calls);
+                figs = figs.map( (call, i) => {
+                    return {name: `figure-${i+1}.${roamToLatex.output.figs.types[i]}`, input: call};
+                });
+
+                let packageFiles = [...figs, {name: `${title}.tex`, input: roamToLatex.output.tex.content}];
                 if(roamToLatex.output.bib.blob != null){ packageFiles.push({name: "bibliography.bib", input: roamToLatex.output.bib.blob}) };
                 roamToLatex.output.package.blob = await downloadZip(packageFiles).blob();
                 roamToLatex.output.package.blobURL = URL.createObjectURL(roamToLatex.output.package.blob);
